@@ -1,0 +1,64 @@
+:root {
+  --color-bg: #14161a;
+  --color-surface: #1d2027;
+  --color-surface-2: #262a32;
+  --color-surface-3: #30353f;
+  --color-border: #3a3f49;
+  --color-text-primary: #f2f0e9;
+  --color-text-muted: #9aa0ac;
+  --color-text-faint: #666c78;
+  --color-accent: #ff7a29;
+  --color-accent-dark: #c85a16;
+  --color-accent-soft: #402611;
+  --color-steel: #4c8dae;
+  --color-steel-soft: #152733;
+  --color-success: #4caf6d;
+  --color-success-soft: #122b1b;
+  --color-warning: #e8b93f;
+  --color-warning-soft: #332a0e;
+  --color-danger: #e1554f;
+  --color-danger-soft: #331414;
+
+  --font-display: "Barlow Condensed", sans-serif;
+  --font-body: "Inter", sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
+}
+
+html {
+  height: 100%;
+  color-scheme: dark;
+}
+
+html,
+body {
+  max-width: 100vw;
+  overflow-x: hidden;
+}
+
+body {
+  min-height: 100%;
+  color: var(--color-text-primary);
+  background: var(--color-bg);
+  font-family: var(--font-body), Arial, Helvetica, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button,
+input,
+textarea,
+select {
+  font-family: inherit;
+  color: inherit;
+}
