@@ -8,6 +8,8 @@ import { finishedEntryDurationMs, startOfToday } from "@/lib/time";
 import { prisma } from "@/lib/prisma";
 import { finishEntry, startEntry, togglePause } from "./actions";
 
+export const dynamic = "force-dynamic";
+
 export default async function HorarioPage() {
   const [activeEntry, todayEntries] = await Promise.all([
     prisma.timeEntry.findFirst({ where: { end: null }, orderBy: { start: "desc" } }),

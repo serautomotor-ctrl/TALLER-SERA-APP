@@ -7,6 +7,8 @@ import { ChangePasswordForm } from "@/components/ajustes/ChangePasswordForm";
 import { prisma } from "@/lib/prisma";
 import { updateSettings } from "./actions";
 
+export const dynamic = "force-dynamic";
+
 export default async function AjustesPage() {
   const settings = await prisma.settings.findUniqueOrThrow({ where: { id: "singleton" } });
 

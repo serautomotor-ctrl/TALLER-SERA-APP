@@ -10,6 +10,8 @@ import { fmtDate, fmtDur, fmtEUR, fmtTime } from "@/lib/format";
 import { finishedEntryDurationMs, startOfToday } from "@/lib/time";
 import { prisma } from "@/lib/prisma";
 
+export const dynamic = "force-dynamic";
+
 export default async function InicioPage() {
   const [openOrders, vehicleCount, pendingAgg, todayEntries, activeEntry, recentOrders] = await Promise.all([
     prisma.order.count({ where: { status: { not: "cerrada" } } }),
