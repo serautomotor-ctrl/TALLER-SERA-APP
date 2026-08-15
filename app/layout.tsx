@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Barlow_Condensed, Inter, JetBrains_Mono } from "next/font/google";
+import { TallerNav } from "@/components/TallerNav";
 import "./globals.css";
 
 const barlowCondensed = Barlow_Condensed({
@@ -32,7 +33,9 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="es" className={`${barlowCondensed.variable} ${inter.variable} ${jetbrainsMono.variable}`}>
-      <body>{children}</body>
+      <body>
+        <TallerNav>{children}</TallerNav>
+      </body>
     </html>
   );
 }

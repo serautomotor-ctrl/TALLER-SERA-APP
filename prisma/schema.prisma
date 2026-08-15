@@ -1,0 +1,100 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client"
+  output   = "../app/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum OrderStatus {
+  abierta
+  en_progreso
+  pendiente_piezas
+  cerrada
+}
+
+model Settings {
+  id           String  @id @default("singleton")
+  workshopName String  @default("Automecanica Sera")
+  taxId        String  @default("")
+  address      String  @default("")
+  phone        String  @default("")
+  email        String  @default("")
+  logoUrl      String  @default("")
+  hourlyRate   Decimal @default(0) @db.Decimal(10, 2)
+  passwordHash String
+  passwordSalt String
+}
+
+model Vehicle {
+  id              String         @id @default(cuid())
+  plate           String         @unique
+  clientName      String         @default("")
+  phone           String         @default("")
+  model           String         @default("")
+  pendingPayments Decimal        @default(0) @db.Decimal(10, 2)
+  createdAt       DateTime       @default(now())
+  history         HistoryEntry[]
+  warranties      Warranty[]
+}
+
+model HistoryEntry {
+  id        String   @id @default(cuid())
+  vehicle   Vehicle  @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  vehicleId String
+  text      String
+  date      DateTime @default(now())
+}
+
+model Warranty {
+  id        String   @id @default(cuid())
+  vehicle   Vehicle  @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  vehicleId String
+  text      String
+  addedAt   DateTime @default(now())
+}
+
+model Order {
+  id          String      @id @default(cuid())
+  plate       String
+  description String      @default("")
+  status      OrderStatus @default(abierta)
+  createdAt   DateTime    @default(now())
+  items       OrderItem[]
+  timeEntries TimeEntry[]
+}
+
+model Article {
+  id         String      @id @default(cuid())
+  name       String
+  price      Decimal     @db.Decimal(10, 2)
+  orderItems OrderItem[]
+}
+
+model OrderItem {
+  id        String   @id @default(cuid())
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  orderId   String
+  article   Article? @relation(fields: [articleId], references: [id])
+  articleId String?
+  name      String
+  price     Decimal  @db.Decimal(10, 2)
+  qty       Int      @default(1)
+}
+
+model TimeEntry {
+  id         String    @id @default(cuid())
+  task       String
+  plate      String    @default("")
+  order      Order?    @relation(fields: [orderId], references: [id])
+  orderId    String?
+  start      DateTime  @default(now())
+  end        DateTime?
+  pausedMs   Int       @default(0)
+  paused     Boolean   @default(false)
+  pauseStart DateTime?
+}
