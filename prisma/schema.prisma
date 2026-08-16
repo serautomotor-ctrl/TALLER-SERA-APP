@@ -123,6 +123,31 @@ model OrderItem {
   qty       Int      @default(1)
 }
 
+model Invoice {
+  id         String        @id @default(cuid())
+  number     String        @unique
+  plate      String
+  clientName String        @default("")
+  clientNif  String        @default("")
+  subtotal   Decimal       @db.Decimal(10, 2)
+  vatTotal   Decimal       @db.Decimal(10, 2)
+  total      Decimal       @db.Decimal(10, 2)
+  createdAt  DateTime      @default(now())
+  prevHash   String        @default("")
+  hash       String
+  items      InvoiceItem[]
+}
+
+model InvoiceItem {
+  id        String  @id @default(cuid())
+  invoice   Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  invoiceId String
+  concept   String
+  qty       Int     @default(1)
+  unitPrice Decimal @db.Decimal(10, 2)
+  vat       Int     @default(21)
+}
+
 model TimeEntry {
   id         String    @id @default(cuid())
   task       String
