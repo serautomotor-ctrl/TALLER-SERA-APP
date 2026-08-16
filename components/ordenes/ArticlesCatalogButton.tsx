@@ -9,7 +9,7 @@ import { fmtEUR } from "@/lib/format";
 import { createArticle, removeArticle } from "@/app/ordenes/actions";
 import { ArticleQrModal } from "./ArticleQrModal";
 
-type Article = { id: string; name: string; price: number };
+type Article = { id: string; name: string; price: number; costPrice?: number };
 
 export function ArticlesCatalogButton({ articles }: { articles: Article[] }) {
   const [open, setOpen] = useState(false);
@@ -26,7 +26,8 @@ export function ArticlesCatalogButton({ articles }: { articles: Article[] }) {
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             <form action={createArticle} style={{ display: "flex", gap: 8 }}>
               <TextInput name="name" placeholder="Nombre del articulo" style={{ flex: 1 }} required />
-              <TextInput name="price" placeholder="Precio" style={{ width: 90 }} required />
+              <TextInput name="price" placeholder="Precio venta" style={{ width: 90 }} required />
+              <TextInput name="costPrice" placeholder="Coste" style={{ width: 80 }} />
               <Button type="submit">
                 <IconPlus />
               </Button>
@@ -39,7 +40,9 @@ export function ArticlesCatalogButton({ articles }: { articles: Article[] }) {
                 <div key={a.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", background: "var(--color-surface-2)", borderRadius: 8, padding: "8px 10px" }}>
                   <div>
                     <p style={{ margin: 0, fontFamily: "var(--font-body)", fontSize: 13, color: "var(--color-text-primary)", fontWeight: 600 }}>{a.name}</p>
-                    <p style={{ margin: 0, fontFamily: "var(--font-mono)", fontSize: 12, color: "var(--color-accent)" }}>{fmtEUR(a.price)}</p>
+                    <p style={{ margin: 0, fontFamily: "var(--font-mono)", fontSize: 12, color: "var(--color-accent)" }}>
+                      {fmtEUR(a.price)} {a.costPrice ? <span style={{ color: "var(--color-text-faint)" }}>· coste {fmtEUR(a.costPrice)}</span> : null}
+                    </p>
                   </div>
                   <div style={{ display: "flex", gap: 6 }}>
                     <Button type="button" onClick={() => setQrArticle(a)} style={{ padding: "5px 9px" }}>

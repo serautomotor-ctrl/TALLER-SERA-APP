@@ -174,6 +174,17 @@ export function IconChevronRight(props: IconProps) {
   );
 }
 
+export function IconChart(props: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.8" {...props}>
+      <path d="M3.5 20.5h17" strokeLinecap="round" />
+      <rect x="5.5" y="12" width="3.4" height="7" rx="0.8" />
+      <rect x="10.3" y="7.5" width="3.4" height="11.5" rx="0.8" />
+      <rect x="15.1" y="4" width="3.4" height="15" rx="0.8" />
+    </svg>
+  );
+}
+
 export function IconSparkle(props: IconProps) {
   return (
     <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.8" {...props}>

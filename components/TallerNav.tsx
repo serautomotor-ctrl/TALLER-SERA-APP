@@ -6,6 +6,7 @@ import type { ReactNode } from "react";
 import { logout } from "@/app/login/actions";
 import {
   IconCalendar,
+  IconChart,
   IconClipboard,
   IconClock,
   IconCard,
@@ -27,6 +28,7 @@ const NAV_ITEMS = [
   { href: "/ordenes", label: "Ordenes y QR", icon: IconQr },
   { href: "/facturas", label: "Facturas", icon: IconInvoice },
   { href: "/diagnostico", label: "Diagnostico", icon: IconSparkle },
+  { href: "/rentabilidad", label: "Rentabilidad", icon: IconChart },
   { href: "/ajustes", label: "Ajustes", icon: IconSettings },
 ];
 

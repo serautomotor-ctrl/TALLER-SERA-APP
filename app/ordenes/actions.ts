@@ -53,7 +53,7 @@ export async function addCatalogItem(orderId: string, formData: FormData) {
     await prisma.orderItem.update({ where: { id: existing.id }, data: { qty: existing.qty + 1 } });
   } else {
     await prisma.orderItem.create({
-      data: { orderId, articleId, name: article.name, price: article.price, qty: 1 },
+      data: { orderId, articleId, name: article.name, price: article.price, costPrice: article.costPrice, qty: 1 },
     });
   }
   revalidatePath("/ordenes");
@@ -74,8 +74,9 @@ export async function removeOrderItem(itemId: string) {
 export async function createArticle(formData: FormData) {
   const name = String(formData.get("name") || "").trim();
   const price = parseFloat(String(formData.get("price") || "").replace(",", "."));
+  const costPrice = parseFloat(String(formData.get("costPrice") || "0").replace(",", ".")) || 0;
   if (!name || !Number.isFinite(price)) return;
-  await prisma.article.create({ data: { name, price } });
+  await prisma.article.create({ data: { name, price, costPrice } });
   revalidatePath("/ordenes");
 }
 

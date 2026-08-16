@@ -32,7 +32,7 @@ export default async function OrdenesPage({ searchParams }: { searchParams: Prom
         subtitle="Crea la orden de reparacion, controla el tiempo, anade articulos y genera etiquetas QR"
         right={
           <div style={{ display: "flex", gap: 8 }}>
-            <ArticlesCatalogButton articles={articles.map((a) => ({ id: a.id, name: a.name, price: Number(a.price) }))} />
+            <ArticlesCatalogButton articles={articles.map((a) => ({ id: a.id, name: a.name, price: Number(a.price), costPrice: Number(a.costPrice) }))} />
             <NewOrderButton />
           </div>
         }
