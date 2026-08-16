@@ -24,7 +24,7 @@ export function NewAppointmentButton({ dateKey }: { dateKey: string }) {
             }}
             style={{ display: "flex", flexDirection: "column", gap: 12 }}
           >
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 100px", gap: 10 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) 100px", gap: 10 }}>
               <Field label="Fecha">
                 <TextInput type="date" name="date" defaultValue={dateKey} required />
               </Field>

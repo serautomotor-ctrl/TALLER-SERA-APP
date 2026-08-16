@@ -70,7 +70,7 @@ export default async function RentabilidadPage({ searchParams }: { searchParams:
         <MetricCard label="Beneficio estimado" value={fmtEUR(beneficioEstimado)} tone={beneficioEstimado >= 0 ? "success" : "danger"} />
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) minmax(0, 1fr)", gap: 14 }}>
         <Card>
           <SectionTitle>Materiales usados en ordenes</SectionTitle>
           <div style={{ display: "flex", flexDirection: "column", gap: 6, marginTop: 10 }}>

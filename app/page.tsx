@@ -35,7 +35,7 @@ export default async function InicioPage() {
         <MetricCard label="Horas de hoy" value={fmtDur(todayMs)} tone="success" href="/horario" />
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1.1fr 1fr", gap: 14 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1.1fr) minmax(0, 1fr)", gap: 14 }}>
         <Card>
           <SectionTitle>Estado del control horario</SectionTitle>
           {activeEntry ? (

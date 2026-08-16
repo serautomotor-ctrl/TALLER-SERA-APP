@@ -37,7 +37,7 @@ export default async function RecepcionPage({ searchParams }: { searchParams: Pr
         title="Recepcion activa"
         subtitle="Registra el estado del vehiculo al entrar en el taller, separando lo pedido por el cliente de los hallazgos"
       />
-      <div style={{ display: "grid", gridTemplateColumns: "280px 1fr", gap: 16, alignItems: "start" }}>
+      <div className="list-detail-grid">
         <Card style={{ padding: 12 }}>
           <p style={{ margin: "0 0 10px", fontFamily: "var(--font-body)", fontSize: 12, fontWeight: 600, color: "var(--color-text-muted)", textTransform: "uppercase", letterSpacing: 0.3 }}>
             Ordenes

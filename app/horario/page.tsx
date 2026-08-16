@@ -19,7 +19,7 @@ export default async function HorarioPage() {
   return (
     <div>
       <Header title="Control horario" subtitle="Inicia, pausa y cierra el tiempo dedicado a cada tarea" />
-      <div style={{ display: "grid", gridTemplateColumns: "auto 1fr", gap: 24, alignItems: "start" }}>
+      <div className="dial-detail-grid">
         <HorarioDial
           activeEntry={activeEntry}
           startEntryAction={startEntry}

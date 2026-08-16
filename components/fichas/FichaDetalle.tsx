@@ -32,7 +32,7 @@ export function FichaDetalle({ vehicle }: { vehicle: VehicleWithRelations }) {
         </div>
       </Card>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) minmax(0, 1fr)", gap: 14 }}>
         <Card>
           <SectionTitle>Garantias vigentes</SectionTitle>
           <form action={addWarranty.bind(null, vehicle.id)} style={{ display: "flex", gap: 8, margin: "10px 0" }}>

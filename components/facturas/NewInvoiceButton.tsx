@@ -67,7 +67,7 @@ export function NewInvoiceButton({ vehicles }: { vehicles: Vehicle[] }) {
       {open && (
         <Modal title="Nueva factura" onClose={() => setOpen(false)}>
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) minmax(0, 1fr)", gap: 10 }}>
               <Field label="Matricula">
                 <TextInput list="fac-plates" value={plate} onChange={(e) => handlePlateChange(e.target.value)} placeholder="0000 ABC" />
                 <datalist id="fac-plates">
@@ -88,7 +88,7 @@ export function NewInvoiceButton({ vehicles }: { vehicles: Vehicle[] }) {
               <span style={{ fontSize: 12, fontWeight: 600, color: "var(--color-text-muted)", letterSpacing: 0.3, textTransform: "uppercase" }}>Conceptos</span>
               <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 8 }}>
                 {items.map((it) => (
-                  <div key={it.id} style={{ display: "grid", gridTemplateColumns: "1fr 44px 64px 52px 20px", gap: 6, alignItems: "center" }}>
+                  <div key={it.id} style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) 44px 64px 52px 20px", gap: 6, alignItems: "center" }}>
                     <TextInput
                       placeholder="Concepto"
                       value={it.concept}

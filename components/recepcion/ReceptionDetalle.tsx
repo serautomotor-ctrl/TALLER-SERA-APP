@@ -144,7 +144,7 @@ export function ReceptionDetalle({
         </div>
       </Card>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) minmax(0, 1fr)", gap: 14 }}>
         <Card>
           <Pill tone="steel">Pedido del cliente</Pill>
           <div style={{ marginTop: 8 }}>

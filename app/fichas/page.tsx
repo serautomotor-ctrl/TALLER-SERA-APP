@@ -36,7 +36,7 @@ export default async function FichasPage({
   return (
     <div>
       <Header title="Fichas por matricula" subtitle="Busca un vehiculo para ver historial, garantias y cobros pendientes" right={<NewFichaButton />} />
-      <div style={{ display: "grid", gridTemplateColumns: "320px 1fr", gap: 16, alignItems: "start" }}>
+      <div className="list-detail-grid">
         <Card style={{ padding: 12 }}>
           <form action="/fichas" method="get" style={{ position: "relative", marginBottom: 10 }}>
             <IconSearch style={{ position: "absolute", left: 10, top: 9, color: "var(--color-text-faint)" }} />
