@@ -18,14 +18,15 @@ enum OrderStatus {
 }
 
 model Settings {
-  id           String  @id @default("singleton")
-  workshopName String  @default("Automecanica Sera")
-  taxId        String  @default("")
-  address      String  @default("")
-  phone        String  @default("")
-  email        String  @default("")
-  logoUrl      String  @default("")
-  hourlyRate   Decimal @default(0) @db.Decimal(10, 2)
+  id           String   @id @default("singleton")
+  workshopName String   @default("Automecanica Sera")
+  taxId        String   @default("")
+  address      String   @default("")
+  phone        String   @default("")
+  email        String   @default("")
+  logoUrl      String   @default("")
+  hourlyRate   Decimal  @default(0) @db.Decimal(10, 2)
+  checklist    String[] @default(["Neumaticos", "Pastillas de freno", "Discos de freno", "Amortiguadores", "Niveles de liquidos", "Bateria", "Luces", "Escobillas", "Correa de distribucion", "Filtro de aire", "Aceite motor", "Suspension y direccion"])
   passwordHash String
   passwordSalt String
 }
@@ -66,6 +67,42 @@ model Order {
   createdAt   DateTime    @default(now())
   items       OrderItem[]
   timeEntries TimeEntry[]
+  reception   Reception?
+}
+
+enum BudgetStatus {
+  sin_enviar
+  enviado
+  aceptado
+  rechazado
+}
+
+model Reception {
+  id              String          @id @default(cuid())
+  order           Order           @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  orderId         String          @unique
+  createdAt       DateTime        @default(now())
+  checkpoints     Json            @default("{}")
+  budgetStatus    BudgetStatus    @default(sin_enviar)
+  sentAt          DateTime?
+  requestedItems  RequestedItem[]
+  findings        Finding[]
+}
+
+model RequestedItem {
+  id          String    @id @default(cuid())
+  reception   Reception @relation(fields: [receptionId], references: [id], onDelete: Cascade)
+  receptionId String
+  text        String
+}
+
+model Finding {
+  id          String    @id @default(cuid())
+  reception   Reception @relation(fields: [receptionId], references: [id], onDelete: Cascade)
+  receptionId String
+  text        String
+  price       Decimal?  @db.Decimal(10, 2)
+  photos      String[]  @default([])
 }
 
 model Article {

@@ -4,6 +4,7 @@ import { Header } from "@/components/ui/Header";
 import { SectionTitle } from "@/components/ui/SectionTitle";
 import { Field, TextInput } from "@/components/ui/inputs";
 import { ChangePasswordForm } from "@/components/ajustes/ChangePasswordForm";
+import { ChecklistEditor } from "@/components/ajustes/ChecklistEditor";
 import { prisma } from "@/lib/prisma";
 import { updateSettings } from "./actions";
 
@@ -41,6 +42,14 @@ export default async function AjustesPage() {
               Guardar cambios
             </Button>
           </form>
+        </Card>
+
+        <Card>
+          <SectionTitle>Puntos de control de la recepcion</SectionTitle>
+          <p style={{ margin: "4px 0 12px", fontFamily: "var(--font-body)", fontSize: 12.5, color: "var(--color-text-muted)" }}>
+            Lista que aparece al revisar un vehiculo en Recepcion. Anade o quita los que necesites.
+          </p>
+          <ChecklistEditor items={settings.checklist} />
         </Card>
 
         <Card>

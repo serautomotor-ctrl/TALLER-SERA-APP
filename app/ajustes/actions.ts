@@ -20,6 +20,26 @@ export async function updateSettings(formData: FormData) {
   revalidatePath("/");
 }
 
+export async function addChecklistItem(formData: FormData) {
+  const text = String(formData.get("text") || "").trim();
+  if (!text) return;
+  const settings = await prisma.settings.findUniqueOrThrow({ where: { id: "singleton" } });
+  if (settings.checklist.includes(text)) return;
+  await prisma.settings.update({ where: { id: "singleton" }, data: { checklist: [...settings.checklist, text] } });
+  revalidatePath("/ajustes");
+  revalidatePath("/recepcion");
+}
+
+export async function removeChecklistItem(text: string) {
+  const settings = await prisma.settings.findUniqueOrThrow({ where: { id: "singleton" } });
+  await prisma.settings.update({
+    where: { id: "singleton" },
+    data: { checklist: settings.checklist.filter((t) => t !== text) },
+  });
+  revalidatePath("/ajustes");
+  revalidatePath("/recepcion");
+}
+
 export async function changePassword(formData: FormData): Promise<{ error?: string; ok?: boolean }> {
   const current = String(formData.get("currentPassword") || "");
   const next = String(formData.get("newPassword") || "");
