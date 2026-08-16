@@ -5,6 +5,7 @@ import { SectionTitle } from "@/components/ui/SectionTitle";
 import { Field, TextInput } from "@/components/ui/inputs";
 import { ChangePasswordForm } from "@/components/ajustes/ChangePasswordForm";
 import { ChecklistEditor } from "@/components/ajustes/ChecklistEditor";
+import { AiKeyForm } from "@/components/ajustes/AiKeyForm";
 import { prisma } from "@/lib/prisma";
 import { updateSettings } from "./actions";
 
@@ -50,6 +51,15 @@ export default async function AjustesPage() {
             Lista que aparece al revisar un vehiculo en Recepcion. Anade o quita los que necesites.
           </p>
           <ChecklistEditor items={settings.checklist} />
+        </Card>
+
+        <Card>
+          <SectionTitle>Diagnostico con IA</SectionTitle>
+          <p style={{ margin: "4px 0 12px", fontFamily: "var(--font-body)", fontSize: 12.5, color: "var(--color-text-muted)" }}>
+            Clave API de Anthropic (Claude) para el modulo de Diagnostico. Se saca en{" "}
+            <span style={{ color: "var(--color-text-primary)" }}>console.anthropic.com</span>, en la seccion de claves API.
+          </p>
+          <AiKeyForm hasKey={!!settings.aiApiKey} />
         </Card>
 
         <Card>

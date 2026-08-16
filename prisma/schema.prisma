@@ -27,6 +27,7 @@ model Settings {
   logoUrl      String   @default("")
   hourlyRate   Decimal  @default(0) @db.Decimal(10, 2)
   checklist    String[] @default(["Neumaticos", "Pastillas de freno", "Discos de freno", "Amortiguadores", "Niveles de liquidos", "Bateria", "Luces", "Escobillas", "Correa de distribucion", "Filtro de aire", "Aceite motor", "Suspension y direccion"])
+  aiApiKey     String   @default("")
   passwordHash String
   passwordSalt String
 }
@@ -163,6 +164,16 @@ model Appointment {
   notes      String            @default("")
   status     AppointmentStatus @default(pendiente)
   createdAt  DateTime          @default(now())
+}
+
+model Diagnosis {
+  id          String   @id @default(cuid())
+  plate       String   @default("")
+  symptoms    String
+  aiResponse  String
+  resolved    Boolean  @default(false)
+  resolution  String   @default("")
+  createdAt   DateTime @default(now())
 }
 
 model TimeEntry {

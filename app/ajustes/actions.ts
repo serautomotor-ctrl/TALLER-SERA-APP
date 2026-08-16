@@ -20,6 +20,13 @@ export async function updateSettings(formData: FormData) {
   revalidatePath("/");
 }
 
+export async function updateAiApiKey(formData: FormData) {
+  const aiApiKey = String(formData.get("aiApiKey") || "").trim();
+  await prisma.settings.update({ where: { id: "singleton" }, data: { aiApiKey } });
+  revalidatePath("/ajustes");
+  revalidatePath("/diagnostico");
+}
+
 export async function addChecklistItem(formData: FormData) {
   const text = String(formData.get("text") || "").trim();
   if (!text) return;

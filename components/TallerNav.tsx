@@ -14,6 +14,7 @@ import {
   IconLogout,
   IconQr,
   IconSettings,
+  IconSparkle,
   IconWrench,
 } from "./ui/icons";
 
@@ -25,6 +26,7 @@ const NAV_ITEMS = [
   { href: "/recepcion", label: "Recepcion", icon: IconClipboard },
   { href: "/ordenes", label: "Ordenes y QR", icon: IconQr },
   { href: "/facturas", label: "Facturas", icon: IconInvoice },
+  { href: "/diagnostico", label: "Diagnostico", icon: IconSparkle },
   { href: "/ajustes", label: "Ajustes", icon: IconSettings },
 ];
 
