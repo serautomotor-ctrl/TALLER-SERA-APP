@@ -148,6 +148,23 @@ model InvoiceItem {
   vat       Int     @default(21)
 }
 
+enum AppointmentStatus {
+  pendiente
+  confirmada
+  cancelada
+}
+
+model Appointment {
+  id         String            @id @default(cuid())
+  date       DateTime
+  plate      String            @default("")
+  clientName String            @default("")
+  reason     String            @default("")
+  notes      String            @default("")
+  status     AppointmentStatus @default(pendiente)
+  createdAt  DateTime          @default(now())
+}
+
 model TimeEntry {
   id         String    @id @default(cuid())
   task       String

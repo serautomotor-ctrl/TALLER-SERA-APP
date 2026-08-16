@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 import { logout } from "@/app/login/actions";
 import {
+  IconCalendar,
   IconClipboard,
   IconClock,
   IconCard,
@@ -20,6 +21,7 @@ const NAV_ITEMS = [
   { href: "/", label: "Inicio", icon: IconHome },
   { href: "/horario", label: "Horario", icon: IconClock },
   { href: "/fichas", label: "Fichas", icon: IconCard },
+  { href: "/agenda", label: "Agenda", icon: IconCalendar },
   { href: "/recepcion", label: "Recepcion", icon: IconClipboard },
   { href: "/ordenes", label: "Ordenes y QR", icon: IconQr },
   { href: "/facturas", label: "Facturas", icon: IconInvoice },
@@ -103,7 +105,15 @@ export function TallerNav({ children }: { children: ReactNode }) {
 
       <div style={{ flex: 1, padding: "22px 24px", minWidth: 0, overflowY: "auto" }}>{children}</div>
 
-      <div style={{ display: "flex", borderTop: "1px solid var(--color-border)", background: "var(--color-surface)", flexShrink: 0 }}>
+      <div
+        style={{
+          display: "flex",
+          borderTop: "1px solid var(--color-border)",
+          background: "var(--color-surface)",
+          flexShrink: 0,
+          overflowX: "auto",
+        }}
+      >
         {NAV_ITEMS.map((item) => {
           const Icon = item.icon;
           const active = pathname === item.href;
@@ -112,7 +122,7 @@ export function TallerNav({ children }: { children: ReactNode }) {
               key={item.href}
               href={item.href}
               style={{
-                flex: 1,
+                flex: "1 0 72px",
                 display: "flex",
                 flexDirection: "column",
                 alignItems: "center",
@@ -120,6 +130,7 @@ export function TallerNav({ children }: { children: ReactNode }) {
                 gap: 4,
                 padding: "10px 4px 12px",
                 cursor: "pointer",
+                whiteSpace: "nowrap",
                 background: "transparent",
                 color: active ? "var(--color-accent)" : "var(--color-text-faint)",
                 fontFamily: "var(--font-body)",

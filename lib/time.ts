@@ -20,3 +20,22 @@ export function finishedEntryDurationMs(entry: { start: Date; end: Date | null; 
   const end = entry.end ? entry.end.getTime() : Date.now();
   return end - entry.start.getTime() - entry.pausedMs;
 }
+
+export function toDateKey(d: Date) {
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
+  return `${yyyy}-${mm}-${dd}`;
+}
+
+export function dayBounds(dateKey: string) {
+  const start = new Date(`${dateKey}T00:00:00`);
+  const end = new Date(`${dateKey}T23:59:59.999`);
+  return { start, end };
+}
+
+export function addDaysToKey(dateKey: string, days: number) {
+  const d = new Date(`${dateKey}T00:00:00`);
+  d.setDate(d.getDate() + days);
+  return toDateKey(d);
+}

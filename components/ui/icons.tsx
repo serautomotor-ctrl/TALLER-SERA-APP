@@ -146,6 +146,34 @@ export function IconPrint(props: IconProps) {
   );
 }
 
+export function IconCalendar(props: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.8" {...props}>
+      <rect x="3.5" y="5" width="17" height="15.5" rx="2" />
+      <path d="M3.5 9.5h17M8 3v3.5M16 3v3.5" strokeLinecap="round" />
+      <circle cx="8" cy="13.5" r="1.1" fill="currentColor" stroke="none" />
+      <circle cx="12" cy="13.5" r="1.1" fill="currentColor" stroke="none" />
+      <circle cx="8" cy="17" r="1.1" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}
+
+export function IconChevronLeft(props: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" {...props}>
+      <path d="M15 5.5 8.5 12l6.5 6.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+export function IconChevronRight(props: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" {...props}>
+      <path d="m9 5.5 6.5 6.5L9 18.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
 export function IconSettings(props: IconProps) {
   return (
     <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.8" {...props}>
