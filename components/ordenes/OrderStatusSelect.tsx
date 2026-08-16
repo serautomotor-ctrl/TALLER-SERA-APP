@@ -16,6 +16,7 @@ export function OrderStatusSelect({ orderId, status }: { orderId: string; status
 
   return (
     <Select
+      key={status}
       defaultValue={status}
       onChange={(e) => {
         const value = e.target.value;
