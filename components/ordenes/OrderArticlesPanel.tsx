@@ -5,9 +5,10 @@ import { useTransition } from "react";
 import { Button } from "@/components/ui/Button";
 import { TextInput } from "@/components/ui/inputs";
 import { Modal } from "@/components/ui/Modal";
-import { IconPlus, IconTrash } from "@/components/ui/icons";
+import { IconCamera, IconPlus, IconTrash } from "@/components/ui/icons";
 import { fmtEUR } from "@/lib/format";
 import { addCatalogItem, changeItemQty, removeOrderItem } from "@/app/ordenes/actions";
+import { QrScanner } from "./QrScanner";
 
 type Article = { id: string; name: string; price: number };
 type OrderItem = { id: string; name: string; price: number; qty: number };
@@ -79,36 +80,81 @@ export function OrderArticlesPanel({ orderId, items, articles }: { orderId: stri
 }
 
 function AddArticleForm({ orderId, articles, onAdded }: { orderId: string; articles: Article[]; onAdded: () => void }) {
+  const [mode, setMode] = useState<"buscar" | "escanear">("buscar");
   const [query, setQuery] = useState("");
+  const [scanMessage, setScanMessage] = useState("");
   const filtered = articles.filter((a) => a.name.toLowerCase().includes(query.toLowerCase()));
+
+  const addArticle = async (articleId: string) => {
+    const formData = new FormData();
+    formData.set("articleId", articleId);
+    await addCatalogItem(orderId, formData);
+  };
+
+  const handleDetect = (text: string) => {
+    if (!text.startsWith("ARTICULO:")) return;
+    const articleId = text.slice("ARTICULO:".length);
+    const article = articles.find((a) => a.id === articleId);
+    if (!article) {
+      setScanMessage("QR leido, pero ese articulo no esta en el catalogo.");
+      return;
+    }
+    setScanMessage(`Anadido: ${article.name}`);
+    addArticle(articleId);
+  };
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-      <TextInput placeholder="Buscar en el catalogo" value={query} onChange={(e) => setQuery(e.target.value)} />
-      <div style={{ display: "flex", flexDirection: "column", gap: 6, maxHeight: 220, overflowY: "auto" }}>
-        {filtered.length === 0 && (
-          <p style={{ fontFamily: "var(--font-body)", fontSize: 13, color: "var(--color-text-muted)" }}>Sin articulos en el catalogo.</p>
-        )}
-        {filtered.map((a) => (
-          <form
-            key={a.id}
-            action={async (formData) => {
-              await addCatalogItem(orderId, formData);
-              onAdded();
-            }}
-            style={{ display: "flex", justifyContent: "space-between", alignItems: "center", background: "var(--color-surface-2)", borderRadius: 8, padding: "8px 10px" }}
-          >
-            <input type="hidden" name="articleId" value={a.id} />
-            <span style={{ fontFamily: "var(--font-body)", fontSize: 13, color: "var(--color-text-primary)" }}>{a.name}</span>
-            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              <span style={{ fontFamily: "var(--font-mono)", fontSize: 12.5, color: "var(--color-accent)" }}>{fmtEUR(a.price)}</span>
-              <button type="submit" style={{ background: "none", border: "none", cursor: "pointer", color: "var(--color-text-muted)" }}>
-                <IconPlus />
-              </button>
-            </div>
-          </form>
-        ))}
+      <div style={{ display: "flex", gap: 6 }}>
+        <Button variant={mode === "buscar" ? "primary" : "ghost"} type="button" onClick={() => setMode("buscar")} style={{ flex: 1 }}>
+          Buscar
+        </Button>
+        <Button variant={mode === "escanear" ? "primary" : "ghost"} type="button" onClick={() => setMode("escanear")} style={{ flex: 1 }}>
+          <IconCamera /> Escanear QR
+        </Button>
       </div>
+
+      {mode === "buscar" ? (
+        <>
+          <TextInput placeholder="Buscar en el catalogo" value={query} onChange={(e) => setQuery(e.target.value)} />
+          <div style={{ display: "flex", flexDirection: "column", gap: 6, maxHeight: 220, overflowY: "auto" }}>
+            {filtered.length === 0 && (
+              <p style={{ fontFamily: "var(--font-body)", fontSize: 13, color: "var(--color-text-muted)" }}>Sin articulos en el catalogo.</p>
+            )}
+            {filtered.map((a) => (
+              <form
+                key={a.id}
+                action={async (formData) => {
+                  await addCatalogItem(orderId, formData);
+                  onAdded();
+                }}
+                style={{ display: "flex", justifyContent: "space-between", alignItems: "center", background: "var(--color-surface-2)", borderRadius: 8, padding: "8px 10px" }}
+              >
+                <input type="hidden" name="articleId" value={a.id} />
+                <span style={{ fontFamily: "var(--font-body)", fontSize: 13, color: "var(--color-text-primary)" }}>{a.name}</span>
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <span style={{ fontFamily: "var(--font-mono)", fontSize: 12.5, color: "var(--color-accent)" }}>{fmtEUR(a.price)}</span>
+                  <button type="submit" style={{ background: "none", border: "none", cursor: "pointer", color: "var(--color-text-muted)" }}>
+                    <IconPlus />
+                  </button>
+                </div>
+              </form>
+            ))}
+          </div>
+        </>
+      ) : (
+        <>
+          <QrScanner onDetect={handleDetect} />
+          {scanMessage && (
+            <div style={{ padding: "8px 10px", background: "var(--color-success-soft)", borderRadius: 8 }}>
+              <p style={{ margin: 0, fontFamily: "var(--font-body)", fontSize: 12, color: "var(--color-success)" }}>{scanMessage}</p>
+            </div>
+          )}
+          <Button variant="secondary" type="button" onClick={onAdded} style={{ width: "100%" }}>
+            Listo
+          </Button>
+        </>
+      )}
     </div>
   );
 }

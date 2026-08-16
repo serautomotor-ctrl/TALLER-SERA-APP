@@ -79,7 +79,7 @@ model OrderItem {
   id        String   @id @default(cuid())
   order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
   orderId   String
-  article   Article? @relation(fields: [articleId], references: [id])
+  article   Article? @relation(fields: [articleId], references: [id], onDelete: SetNull)
   articleId String?
   name      String
   price     Decimal  @db.Decimal(10, 2)

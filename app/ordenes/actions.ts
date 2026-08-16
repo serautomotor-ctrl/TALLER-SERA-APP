@@ -78,3 +78,8 @@ export async function createArticle(formData: FormData) {
   await prisma.article.create({ data: { name, price } });
   revalidatePath("/ordenes");
 }
+
+export async function removeArticle(articleId: string) {
+  await prisma.article.delete({ where: { id: articleId } });
+  revalidatePath("/ordenes");
+}

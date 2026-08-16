@@ -1,17 +1,20 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import { Button } from "@/components/ui/Button";
 import { TextInput } from "@/components/ui/inputs";
 import { Modal } from "@/components/ui/Modal";
-import { IconBarcode, IconPlus } from "@/components/ui/icons";
+import { IconBarcode, IconPlus, IconQr, IconTrash } from "@/components/ui/icons";
 import { fmtEUR } from "@/lib/format";
-import { createArticle } from "@/app/ordenes/actions";
+import { createArticle, removeArticle } from "@/app/ordenes/actions";
+import { ArticleQrModal } from "./ArticleQrModal";
 
 type Article = { id: string; name: string; price: number };
 
 export function ArticlesCatalogButton({ articles }: { articles: Article[] }) {
   const [open, setOpen] = useState(false);
+  const [qrArticle, setQrArticle] = useState<Article | null>(null);
+  const [, startTransition] = useTransition();
 
   return (
     <>
@@ -28,20 +31,35 @@ export function ArticlesCatalogButton({ articles }: { articles: Article[] }) {
                 <IconPlus />
               </Button>
             </form>
-            <div style={{ display: "flex", flexDirection: "column", gap: 6, maxHeight: 260, overflowY: "auto" }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 6, maxHeight: 320, overflowY: "auto" }}>
               {articles.length === 0 && (
                 <p style={{ fontFamily: "var(--font-body)", fontSize: 13, color: "var(--color-text-muted)" }}>Todavia no hay articulos en el catalogo.</p>
               )}
               {articles.map((a) => (
-                <div key={a.id} style={{ display: "flex", justifyContent: "space-between", background: "var(--color-surface-2)", borderRadius: 8, padding: "8px 10px" }}>
-                  <span style={{ fontFamily: "var(--font-body)", fontSize: 13, color: "var(--color-text-primary)" }}>{a.name}</span>
-                  <span style={{ fontFamily: "var(--font-mono)", fontSize: 12.5, color: "var(--color-accent)" }}>{fmtEUR(a.price)}</span>
+                <div key={a.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", background: "var(--color-surface-2)", borderRadius: 8, padding: "8px 10px" }}>
+                  <div>
+                    <p style={{ margin: 0, fontFamily: "var(--font-body)", fontSize: 13, color: "var(--color-text-primary)", fontWeight: 600 }}>{a.name}</p>
+                    <p style={{ margin: 0, fontFamily: "var(--font-mono)", fontSize: 12, color: "var(--color-accent)" }}>{fmtEUR(a.price)}</p>
+                  </div>
+                  <div style={{ display: "flex", gap: 6 }}>
+                    <Button type="button" onClick={() => setQrArticle(a)} style={{ padding: "5px 9px" }}>
+                      <IconQr />
+                    </Button>
+                    <button
+                      type="button"
+                      onClick={() => startTransition(() => removeArticle(a.id))}
+                      style={{ background: "none", border: "none", cursor: "pointer", color: "var(--color-text-faint)" }}
+                    >
+                      <IconTrash />
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
           </div>
         </Modal>
       )}
+      {qrArticle && <ArticleQrModal article={qrArticle} onClose={() => setQrArticle(null)} />}
     </>
   );
 }
