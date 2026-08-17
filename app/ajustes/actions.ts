@@ -20,6 +20,20 @@ export async function updateSettings(formData: FormData) {
   revalidatePath("/");
 }
 
+export async function updateWebSettings(formData: FormData) {
+  await prisma.settings.update({
+    where: { id: "singleton" },
+    data: {
+      whatsapp: String(formData.get("whatsapp") || "").trim(),
+      businessHours: String(formData.get("businessHours") || "").trim(),
+      aboutText: String(formData.get("aboutText") || "").trim(),
+    },
+  });
+  revalidatePath("/ajustes");
+  revalidatePath("/sitio");
+  revalidatePath("/sitio/contacto");
+}
+
 export async function updateAiApiKey(formData: FormData) {
   const aiApiKey = String(formData.get("aiApiKey") || "").trim();
   await prisma.settings.update({ where: { id: "singleton" }, data: { aiApiKey } });

@@ -16,6 +16,7 @@ import {
   IconQr,
   IconSettings,
   IconSparkle,
+  IconWorld,
   IconWrench,
 } from "./ui/icons";
 
@@ -29,13 +30,14 @@ const NAV_ITEMS = [
   { href: "/facturas", label: "Facturas", icon: IconInvoice },
   { href: "/diagnostico", label: "Diagnostico", icon: IconSparkle },
   { href: "/rentabilidad", label: "Rentabilidad", icon: IconChart },
+  { href: "/web/vehiculos", label: "Pagina web", icon: IconWorld },
   { href: "/ajustes", label: "Ajustes", icon: IconSettings },
 ];
 
 export function TallerNav({ children }: { children: ReactNode }) {
   const pathname = usePathname();
 
-  if (pathname === "/login") {
+  if (pathname === "/login" || pathname.startsWith("/sitio")) {
     return <>{children}</>;
   }
 
@@ -120,7 +122,7 @@ export function TallerNav({ children }: { children: ReactNode }) {
       >
         {NAV_ITEMS.map((item) => {
           const Icon = item.icon;
-          const active = pathname === item.href;
+          const active = item.href === "/web/vehiculos" ? pathname.startsWith("/web") : pathname === item.href;
           return (
             <Link
               key={item.href}

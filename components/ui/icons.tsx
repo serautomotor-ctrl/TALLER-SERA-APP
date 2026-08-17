@@ -218,6 +218,25 @@ export function IconLogout(props: IconProps) {
   );
 }
 
+export function IconWorld(props: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.8" {...props}>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M3 12h18M12 3c2.5 2.6 3.8 5.8 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.8-3.8-9S9.5 5.6 12 3Z" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+export function IconCart(props: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.8" {...props}>
+      <path d="M3.5 4.5h2l1.6 10.2a1.5 1.5 0 0 0 1.5 1.3h8.4a1.5 1.5 0 0 0 1.5-1.2l1.3-6.8H7" strokeLinecap="round" strokeLinejoin="round" />
+      <circle cx="9.5" cy="19.5" r="1.4" />
+      <circle cx="17" cy="19.5" r="1.4" />
+    </svg>
+  );
+}
+
 export function IconTrash(props: IconProps) {
   return (
     <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.8" {...props}>

@@ -2,12 +2,12 @@ import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Header } from "@/components/ui/Header";
 import { SectionTitle } from "@/components/ui/SectionTitle";
-import { Field, TextInput } from "@/components/ui/inputs";
+import { Field, TextArea, TextInput } from "@/components/ui/inputs";
 import { ChangePasswordForm } from "@/components/ajustes/ChangePasswordForm";
 import { ChecklistEditor } from "@/components/ajustes/ChecklistEditor";
 import { AiKeyForm } from "@/components/ajustes/AiKeyForm";
 import { prisma } from "@/lib/prisma";
-import { updateNextInvoiceNumber, updateSettings } from "./actions";
+import { updateNextInvoiceNumber, updateSettings, updateWebSettings } from "./actions";
 
 export const dynamic = "force-dynamic";
 
@@ -38,6 +38,28 @@ export default async function AjustesPage() {
             </Field>
             <Field label="Tarifa por hora (para el panel de rentabilidad)">
               <TextInput name="hourlyRate" defaultValue={String(settings.hourlyRate)} style={{ width: "100%" }} />
+            </Field>
+            <Button type="submit" variant="primary" style={{ alignSelf: "flex-start" }}>
+              Guardar cambios
+            </Button>
+          </form>
+        </Card>
+
+        <Card>
+          <SectionTitle>Pagina web publica</SectionTitle>
+          <p style={{ margin: "4px 0 12px", fontFamily: "var(--font-body)", fontSize: 12.5, color: "var(--color-text-muted)" }}>
+            Estos datos se muestran en la web publica del taller (sin contrase&ntilde;a). Los vehiculos, productos y
+            servicios se gestionan desde &laquo;Pagina web&raquo; en el menu.
+          </p>
+          <form action={updateWebSettings} style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            <Field label="WhatsApp (con prefijo, ej. 34600000000)">
+              <TextInput name="whatsapp" defaultValue={settings.whatsapp} style={{ width: "100%" }} />
+            </Field>
+            <Field label="Horario de atencion">
+              <TextInput name="businessHours" placeholder="Lunes a viernes, 9:00 - 19:00" defaultValue={settings.businessHours} style={{ width: "100%" }} />
+            </Field>
+            <Field label="Sobre el taller (texto de presentacion)">
+              <TextArea name="aboutText" defaultValue={settings.aboutText} style={{ width: "100%" }} />
             </Field>
             <Button type="submit" variant="primary" style={{ alignSelf: "flex-start" }}>
               Guardar cambios

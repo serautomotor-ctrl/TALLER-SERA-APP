@@ -29,6 +29,9 @@ model Settings {
   checklist    String[] @default(["Neumaticos", "Pastillas de freno", "Discos de freno", "Amortiguadores", "Niveles de liquidos", "Bateria", "Luces", "Escobillas", "Correa de distribucion", "Filtro de aire", "Aceite motor", "Suspension y direccion"])
   aiApiKey     String   @default("")
   nextInvoiceNumberOverride String @default("")
+  whatsapp      String @default("")
+  businessHours String @default("")
+  aboutText     String @default("")
   passwordHash String
   passwordSalt String
 }
@@ -196,11 +199,84 @@ model Appointment {
   date       DateTime
   plate      String            @default("")
   clientName String            @default("")
+  phone      String            @default("")
   reason     String            @default("")
   notes      String            @default("")
   status     AppointmentStatus @default(pendiente)
+  fromWeb    Boolean           @default(false)
   createdAt  DateTime          @default(now())
   orderId    String?
+}
+
+enum FuelType {
+  gasolina
+  diesel
+  hibrido
+  electrico
+  glp
+  otro
+}
+
+enum TransmissionType {
+  manual
+  automatico
+}
+
+enum VehicleSaleStatus {
+  disponible
+  reservado
+  vendido
+}
+
+model UsedVehicle {
+  id             String            @id @default(cuid())
+  brand          String
+  model          String
+  year           Int?
+  mileage        Int?
+  price          Decimal           @db.Decimal(10, 2)
+  fuel           FuelType          @default(otro)
+  transmission   TransmissionType  @default(manual)
+  power          String            @default("")
+  color          String            @default("")
+  doors          Int?
+  owners         Int?
+  warrantyMonths Int               @default(0)
+  extras         String            @default("")
+  description    String            @default("")
+  status         VehicleSaleStatus @default(disponible)
+  photos         String[]          @default([])
+  featured       Boolean           @default(false)
+  createdAt      DateTime          @default(now())
+}
+
+enum ProductCondition {
+  nuevo
+  usado
+  reacondicionado
+}
+
+model Product {
+  id          String           @id @default(cuid())
+  name        String
+  category    String           @default("")
+  brand       String           @default("")
+  price       Decimal          @db.Decimal(10, 2)
+  condition   ProductCondition @default(nuevo)
+  available   Boolean          @default(true)
+  description String           @default("")
+  photos      String[]         @default([])
+  featured    Boolean          @default(false)
+  createdAt   DateTime         @default(now())
+}
+
+model Service {
+  id          String   @id @default(cuid())
+  name        String
+  description String   @default("")
+  photoUrl    String   @default("")
+  order       Int      @default(0)
+  createdAt   DateTime @default(now())
 }
 
 model Diagnosis {

@@ -13,10 +13,12 @@ type Appointment = {
   date: Date;
   plate: string;
   clientName: string;
+  phone: string;
   reason: string;
   notes: string;
   status: string;
   orderId: string | null;
+  fromWeb: boolean;
 };
 
 const STATUS: Record<string, { label: string; tone: "warning" | "success" | "danger" }> = {
@@ -35,8 +37,13 @@ export function AppointmentRow({ appointment }: { appointment: Appointment }) {
       </span>
       <div style={{ flex: 1 }}>
         <p style={{ margin: 0, fontFamily: "var(--font-body)", fontWeight: 600, fontSize: 13.5, color: "var(--color-text-primary)" }}>
-          {appointment.clientName || "Sin nombre"} {appointment.plate ? `· ${appointment.plate}` : ""}
+          {appointment.clientName || "Sin nombre"} {appointment.plate ? `· ${appointment.plate}` : ""} {appointment.phone ? `· ${appointment.phone}` : ""}
         </p>
+        {appointment.fromWeb && (
+          <span style={{ display: "inline-block", marginTop: 4 }}>
+            <Pill tone="steel">Desde la web</Pill>
+          </span>
+        )}
         {appointment.reason && (
           <p style={{ margin: "2px 0 0", fontFamily: "var(--font-body)", fontSize: 12.5, color: "var(--color-text-muted)" }}>{appointment.reason}</p>
         )}

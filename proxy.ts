@@ -4,7 +4,12 @@ import { isValidSessionToken, SESSION_COOKIE } from "@/lib/auth";
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  if (pathname === "/login" || pathname.startsWith("/_next") || pathname.startsWith("/api/public")) {
+  if (
+    pathname === "/login" ||
+    pathname.startsWith("/_next") ||
+    pathname.startsWith("/api/public") ||
+    pathname.startsWith("/sitio")
+  ) {
     return NextResponse.next();
   }
 
