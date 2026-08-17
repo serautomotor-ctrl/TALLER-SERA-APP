@@ -1,5 +1,6 @@
 "use server";
 
+import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import type { $Enums } from "@/app/generated/prisma/client";
@@ -33,4 +34,18 @@ export async function setAppointmentStatus(id: string, status: $Enums.Appointmen
 export async function removeAppointment(id: string) {
   await prisma.appointment.delete({ where: { id } });
   revalidatePath("/agenda");
+}
+
+export async function convertAppointmentToOrder(appointmentId: string) {
+  const appointment = await prisma.appointment.findUnique({ where: { id: appointmentId } });
+  if (!appointment || appointment.orderId || !appointment.plate) return;
+
+  const order = await prisma.order.create({
+    data: { plate: appointment.plate, description: appointment.reason },
+  });
+  await prisma.appointment.update({ where: { id: appointmentId }, data: { orderId: order.id } });
+
+  revalidatePath("/agenda");
+  revalidatePath("/ordenes");
+  redirect(`/ordenes?qr=${order.id}`);
 }

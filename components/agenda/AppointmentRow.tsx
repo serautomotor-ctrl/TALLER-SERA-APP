@@ -1,10 +1,12 @@
 "use client";
 
+import Link from "next/link";
 import { useTransition } from "react";
 import { Pill } from "@/components/ui/Pill";
+import { Button } from "@/components/ui/Button";
 import { IconTrash } from "@/components/ui/icons";
 import { fmtTime } from "@/lib/format";
-import { removeAppointment, setAppointmentStatus } from "@/app/agenda/actions";
+import { convertAppointmentToOrder, removeAppointment, setAppointmentStatus } from "@/app/agenda/actions";
 
 type Appointment = {
   id: string;
@@ -14,6 +16,7 @@ type Appointment = {
   reason: string;
   notes: string;
   status: string;
+  orderId: string | null;
 };
 
 const STATUS: Record<string, { label: string; tone: "warning" | "success" | "danger" }> = {
@@ -42,6 +45,19 @@ export function AppointmentRow({ appointment }: { appointment: Appointment }) {
         )}
       </div>
       <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap", justifyContent: "flex-end" }}>
+        {appointment.orderId ? (
+          <Link href={`/ordenes?qr=${appointment.orderId}`}>
+            <Pill tone="steel">Ver orden</Pill>
+          </Link>
+        ) : (
+          appointment.plate && (
+            <form action={convertAppointmentToOrder.bind(null, appointment.id)}>
+              <Button type="submit" style={{ fontSize: 12, padding: "5px 9px" }}>
+                Convertir en orden
+              </Button>
+            </form>
+          )
+        )}
         {appointment.status !== "confirmada" && (
           <button
             type="button"
