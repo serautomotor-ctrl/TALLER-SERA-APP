@@ -19,6 +19,7 @@ import {
   setBudgetStatus,
   setCheckpoint,
   setFindingPrice,
+  setReceptionMileage,
 } from "@/app/recepcion/actions";
 
 type Finding = { id: string; text: string; price: number | null; photos: string[] };
@@ -26,6 +27,7 @@ type RequestedItem = { id: string; text: string };
 type Reception = {
   id: string;
   createdAt: Date;
+  mileage: number | null;
   budgetStatus: string;
   checkpoints: Record<string, string>;
   requestedItems: RequestedItem[];
@@ -49,11 +51,13 @@ export function ReceptionDetalle({
   reception,
   order,
   client,
+  currentMileage,
   checklist,
 }: {
   reception: Reception;
   order: { id: string; plate: string };
   client: { clientName: string; phone: string } | null;
+  currentMileage: number | null;
   checklist: string[];
 }) {
   const [, startTransition] = useTransition();
@@ -102,6 +106,7 @@ export function ReceptionDetalle({
           <hr />
           <p><strong>Matricula:</strong> ${order.plate}</p>
           <p><strong>Cliente:</strong> ${client?.clientName || "-"}</p>
+          ${reception.mileage != null ? `<p><strong>Kilometraje:</strong> ${reception.mileage.toLocaleString("es-ES")} km</p>` : ""}
           <p><strong>Fecha y hora de entrada:</strong> ${now.toLocaleDateString("es-ES")} ${now.toLocaleTimeString("es-ES")}</p>
           <p><strong>Trabajos solicitados:</strong></p>
           <ul>${reception.requestedItems.map((i) => `<li>${i.text}</li>`).join("") || "<li>Sin especificar</li>"}</ul>
@@ -136,12 +141,26 @@ export function ReceptionDetalle({
             )}
             <p style={{ margin: "4px 0 0", fontFamily: "var(--font-body)", fontSize: 12.5, color: "var(--color-text-muted)" }}>
               Recepcion iniciada el {fmtDate(reception.createdAt)}
+              {currentMileage != null ? ` · Ultimo km registrado: ${currentMileage.toLocaleString("es-ES")}` : ""}
             </p>
           </div>
           <Button variant="ghost" type="button" onClick={printDeposit}>
             <IconPrint /> Resguardo de deposito
           </Button>
         </div>
+        <form action={setReceptionMileage.bind(null, reception.id)} style={{ display: "flex", gap: 8, marginTop: 12, alignItems: "flex-end" }}>
+          <div style={{ flex: 1, maxWidth: 220 }}>
+            <TextInput
+              name="mileage"
+              type="number"
+              min="0"
+              placeholder="Kilometraje de entrada"
+              defaultValue={reception.mileage ?? ""}
+              style={{ width: "100%" }}
+            />
+          </div>
+          <Button type="submit">Guardar km</Button>
+        </form>
       </Card>
 
       <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) minmax(0, 1fr)", gap: 14 }}>

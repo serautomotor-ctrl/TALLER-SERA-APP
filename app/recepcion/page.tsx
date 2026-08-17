@@ -29,7 +29,9 @@ export default async function RecepcionPage({ searchParams }: { searchParams: Pr
       })
     : null;
 
-  const vehicle = selectedOrder ? await prisma.vehicle.findUnique({ where: { plate: selectedOrder.plate } }) : null;
+  const vehicle = selectedOrder
+    ? await prisma.vehicle.findUnique({ where: { plate: selectedOrder.plate }, include: { customer: true } })
+    : null;
 
   return (
     <div>
@@ -81,7 +83,8 @@ export default async function RecepcionPage({ searchParams }: { searchParams: Pr
               checkpoints: (reception.checkpoints as Record<string, string>) || {},
             }}
             order={{ id: selectedOrder.id, plate: selectedOrder.plate }}
-            client={vehicle ? { clientName: vehicle.clientName, phone: vehicle.phone } : null}
+            client={vehicle ? { clientName: vehicle.customer.name, phone: vehicle.customer.phone } : null}
+            currentMileage={vehicle?.mileage ?? null}
             checklist={settings.checklist}
           />
         ) : (

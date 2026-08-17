@@ -27,6 +27,12 @@ export async function updateAiApiKey(formData: FormData) {
   revalidatePath("/diagnostico");
 }
 
+export async function updateNextInvoiceNumber(formData: FormData) {
+  const value = String(formData.get("nextInvoiceNumberOverride") || "").trim();
+  await prisma.settings.update({ where: { id: "singleton" }, data: { nextInvoiceNumberOverride: value } });
+  revalidatePath("/ajustes");
+}
+
 export async function addChecklistItem(formData: FormData) {
   const text = String(formData.get("text") || "").trim();
   if (!text) return;

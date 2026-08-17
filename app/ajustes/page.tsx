@@ -7,7 +7,7 @@ import { ChangePasswordForm } from "@/components/ajustes/ChangePasswordForm";
 import { ChecklistEditor } from "@/components/ajustes/ChecklistEditor";
 import { AiKeyForm } from "@/components/ajustes/AiKeyForm";
 import { prisma } from "@/lib/prisma";
-import { updateSettings } from "./actions";
+import { updateNextInvoiceNumber, updateSettings } from "./actions";
 
 export const dynamic = "force-dynamic";
 
@@ -51,6 +51,30 @@ export default async function AjustesPage() {
             Lista que aparece al revisar un vehiculo en Recepcion. Anade o quita los que necesites.
           </p>
           <ChecklistEditor items={settings.checklist} />
+        </Card>
+
+        <Card>
+          <SectionTitle>Numeracion de facturas</SectionTitle>
+          <p style={{ margin: "4px 0 12px", fontFamily: "var(--font-body)", fontSize: 12.5, color: "var(--color-text-muted)" }}>
+            Por defecto la numeracion es automatica y correlativa (AAAA-0001, AAAA-0002...). Si quieres continuar la
+            numeracion de otro programa (por ejemplo, empezar por la 300) o corregir un error puntual, escribe aqui el
+            numero que debe tener la <b>proxima</b> factura que emitas. Se usara una sola vez y luego se vuelve a la
+            numeracion automatica a partir de ese punto.
+          </p>
+          <form action={updateNextInvoiceNumber} style={{ display: "flex", gap: 8 }}>
+            <TextInput
+              name="nextInvoiceNumberOverride"
+              defaultValue={settings.nextInvoiceNumberOverride}
+              placeholder="Ej: 2026-0300 (vacio = automatico)"
+              style={{ flex: 1 }}
+            />
+            <Button type="submit">Guardar</Button>
+          </form>
+          {settings.nextInvoiceNumberOverride && (
+            <p style={{ margin: "8px 0 0", fontFamily: "var(--font-body)", fontSize: 12, color: "var(--color-warning)" }}>
+              La proxima factura usara el numero &quot;{settings.nextInvoiceNumberOverride}&quot;.
+            </p>
+          )}
         </Card>
 
         <Card>

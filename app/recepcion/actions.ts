@@ -21,6 +21,22 @@ export async function getOrCreateReception(orderId: string) {
   });
 }
 
+export async function setReceptionMileage(receptionId: string, formData: FormData) {
+  const mileage = parseInt(String(formData.get("mileage") || ""), 10);
+  if (!Number.isFinite(mileage)) return;
+
+  const reception = await prisma.reception.update({
+    where: { id: receptionId },
+    data: { mileage },
+    include: { order: true },
+  });
+
+  await prisma.vehicle.update({ where: { plate: reception.order.plate }, data: { mileage } });
+
+  revalidatePath("/recepcion");
+  revalidatePath("/fichas");
+}
+
 export async function addRequestedItem(receptionId: string, formData: FormData) {
   const text = String(formData.get("text") || "").trim();
   if (!text) return;

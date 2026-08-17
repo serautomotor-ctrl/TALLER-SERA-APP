@@ -9,7 +9,7 @@ import { IconPlus, IconTrash } from "@/components/ui/icons";
 import { fmtEUR } from "@/lib/format";
 import { createInvoice } from "@/app/facturas/actions";
 
-type Vehicle = { id: string; plate: string; clientName: string };
+type Vehicle = { id: string; plate: string; clientName: string; clientNif: string; clientAddress: string };
 type Item = { id: number; concept: string; qty: number; unitPrice: number; vat: number };
 
 let nextId = 1;
@@ -20,6 +20,7 @@ export function NewInvoiceButton({ vehicles }: { vehicles: Vehicle[] }) {
   const [plate, setPlate] = useState("");
   const [clientName, setClientName] = useState("");
   const [clientNif, setClientNif] = useState("");
+  const [clientAddress, setClientAddress] = useState("");
   const [items, setItems] = useState<Item[]>([{ id: nextId++, concept: "", qty: 1, unitPrice: 0, vat: 21 }]);
   const [submitting, setSubmitting] = useState(false);
 
@@ -27,6 +28,7 @@ export function NewInvoiceButton({ vehicles }: { vehicles: Vehicle[] }) {
     setPlate("");
     setClientName("");
     setClientNif("");
+    setClientAddress("");
     setItems([{ id: nextId++, concept: "", qty: 1, unitPrice: 0, vat: 21 }]);
   };
 
@@ -34,7 +36,11 @@ export function NewInvoiceButton({ vehicles }: { vehicles: Vehicle[] }) {
     const upper = value.toUpperCase();
     setPlate(upper);
     const match = vehicles.find((v) => v.plate === upper);
-    if (match) setClientName(match.clientName);
+    if (match) {
+      setClientName(match.clientName);
+      setClientNif(match.clientNif);
+      setClientAddress(match.clientAddress);
+    }
   };
 
   const updateItem = (id: number, patch: Partial<Item>) => {
@@ -50,7 +56,7 @@ export function NewInvoiceButton({ vehicles }: { vehicles: Vehicle[] }) {
 
   const handleSubmit = async () => {
     setSubmitting(true);
-    const res = await createInvoice({ plate, clientName, clientNif, items });
+    const res = await createInvoice({ plate, clientName, clientNif, clientAddress, items });
     setSubmitting(false);
     if (res.invoiceId) {
       setOpen(false);
@@ -80,9 +86,14 @@ export function NewInvoiceButton({ vehicles }: { vehicles: Vehicle[] }) {
                 <TextInput value={clientName} onChange={(e) => setClientName(e.target.value)} placeholder="Nombre o razon social" />
               </Field>
             </div>
-            <Field label="NIF del cliente (opcional)">
-              <TextInput value={clientNif} onChange={(e) => setClientNif(e.target.value)} placeholder="00000000A" />
-            </Field>
+            <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) minmax(0, 1fr)", gap: 10 }}>
+              <Field label="NIF del cliente (opcional)">
+                <TextInput value={clientNif} onChange={(e) => setClientNif(e.target.value)} placeholder="00000000A" />
+              </Field>
+              <Field label="Direccion (opcional)">
+                <TextInput value={clientAddress} onChange={(e) => setClientAddress(e.target.value)} placeholder="Calle, numero, ciudad" />
+              </Field>
+            </div>
 
             <div>
               <span style={{ fontSize: 12, fontWeight: 600, color: "var(--color-text-muted)", letterSpacing: 0.3, textTransform: "uppercase" }}>Conceptos</span>

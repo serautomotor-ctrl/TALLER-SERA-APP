@@ -14,28 +14,40 @@ export default async function FichasPage({
 }) {
   const { q = "", id } = await searchParams;
 
-  const vehicles = await prisma.vehicle.findMany({
-    where: q
-      ? {
-          OR: [
-            { plate: { contains: q, mode: "insensitive" } },
-            { clientName: { contains: q, mode: "insensitive" } },
-          ],
-        }
-      : undefined,
-    orderBy: { createdAt: "desc" },
-  });
+  const [vehicles, customers] = await Promise.all([
+    prisma.vehicle.findMany({
+      where: q
+        ? {
+            OR: [
+              { plate: { contains: q, mode: "insensitive" } },
+              { customer: { name: { contains: q, mode: "insensitive" } } },
+            ],
+          }
+        : undefined,
+      include: { customer: true },
+      orderBy: { createdAt: "desc" },
+    }),
+    prisma.customer.findMany({ orderBy: { name: "asc" } }),
+  ]);
 
   const selected = id
     ? await prisma.vehicle.findUnique({
         where: { id },
-        include: { history: { orderBy: { date: "desc" } }, warranties: { orderBy: { addedAt: "desc" } } },
+        include: {
+          customer: { include: { vehicles: { orderBy: { createdAt: "desc" } } } },
+          history: { orderBy: { date: "desc" } },
+          warranties: { orderBy: { addedAt: "desc" } },
+        },
       })
     : null;
 
   return (
     <div>
-      <Header title="Fichas por matricula" subtitle="Busca un vehiculo para ver historial, garantias y cobros pendientes" right={<NewFichaButton />} />
+      <Header
+        title="Fichas por matricula"
+        subtitle="Busca un vehiculo para ver su cliente, historial, garantias y cobros pendientes"
+        right={<NewFichaButton customers={customers.map((c) => ({ id: c.id, name: c.name }))} />}
+      />
       <div className="list-detail-grid">
         <Card style={{ padding: 12 }}>
           <form action="/fichas" method="get" style={{ position: "relative", marginBottom: 10 }}>
@@ -67,7 +79,7 @@ export default async function FichasPage({
                     {v.plate}
                   </p>
                   <p style={{ margin: "2px 0 0", fontFamily: "var(--font-body)", fontSize: 12, color: "var(--color-text-muted)" }}>
-                    {v.clientName || "Sin nombre"}
+                    {v.customer.name || "Sin nombre"}
                   </p>
                 </Link>
               );

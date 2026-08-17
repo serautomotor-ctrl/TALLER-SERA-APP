@@ -11,17 +11,27 @@ import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
 
+const PAYMENT_STATUS: Record<string, { label: string; tone: "success" | "warning" | "muted" }> = {
+  cobrada: { label: "Cobrada", tone: "success" },
+  parcial: { label: "Cobro parcial", tone: "warning" },
+  pendiente: { label: "Pendiente de cobro", tone: "muted" },
+};
+
 export default async function FacturasPage({ searchParams }: { searchParams: Promise<{ id?: string }> }) {
   const { id } = await searchParams;
 
   const [invoices, vehicles, settings] = await Promise.all([
     prisma.invoice.findMany({ orderBy: { createdAt: "desc" }, include: { items: true } }),
-    prisma.vehicle.findMany({ orderBy: { plate: "asc" } }),
+    prisma.vehicle.findMany({ orderBy: { plate: "asc" }, include: { customer: true } }),
     prisma.settings.findUniqueOrThrow({ where: { id: "singleton" } }),
   ]);
 
   const viewInvoice = id ? invoices.find((i) => i.id === id) ?? null : null;
   const totalFacturado = invoices.reduce((s, i) => s + Number(i.total), 0);
+  const totalPendienteFacturas = invoices.reduce(
+    (s, i) => s + (i.paymentStatus === "cobrada" ? 0 : Number(i.total) - Number(i.paidAmount)),
+    0
+  );
 
   return (
     <div>
@@ -45,7 +55,15 @@ export default async function FacturasPage({ searchParams }: { searchParams: Pro
                 }))}
               />
             )}
-            <NewInvoiceButton vehicles={vehicles.map((v) => ({ id: v.id, plate: v.plate, clientName: v.clientName }))} />
+            <NewInvoiceButton
+              vehicles={vehicles.map((v) => ({
+                id: v.id,
+                plate: v.plate,
+                clientName: v.customer.name,
+                clientNif: v.customer.taxId,
+                clientAddress: v.customer.address,
+              }))}
+            />
           </div>
         }
       />
@@ -53,6 +71,7 @@ export default async function FacturasPage({ searchParams }: { searchParams: Pro
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 12, marginBottom: 18 }}>
         <MetricCard label="Facturas emitidas" value={invoices.length} tone="steel" />
         <MetricCard label="Facturado total" value={fmtEUR(totalFacturado)} tone="accent" />
+        <MetricCard label="Pendiente de cobro" value={fmtEUR(totalPendienteFacturas)} tone={totalPendienteFacturas > 0 ? "warning" : "success"} />
         <MetricCard label="Ultimo numero" value={invoices.length ? invoices[0].number : "-"} tone="success" />
       </div>
 
@@ -83,7 +102,10 @@ export default async function FacturasPage({ searchParams }: { searchParams: Pro
                   {inv.clientName || "Sin cliente"} {inv.plate ? `· ${inv.plate}` : ""} · {fmtDate(inv.createdAt)}
                 </p>
               </div>
-              <Pill tone="success">{fmtEUR(Number(inv.total))}</Pill>
+              <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                <Pill tone={PAYMENT_STATUS[inv.paymentStatus]?.tone || "muted"}>{PAYMENT_STATUS[inv.paymentStatus]?.label}</Pill>
+                <Pill tone="success">{fmtEUR(Number(inv.total))}</Pill>
+              </div>
             </Card>
           </a>
         ))}
@@ -96,6 +118,7 @@ export default async function FacturasPage({ searchParams }: { searchParams: Pro
             subtotal: Number(viewInvoice.subtotal),
             vatTotal: Number(viewInvoice.vatTotal),
             total: Number(viewInvoice.total),
+            paidAmount: Number(viewInvoice.paidAmount),
             items: viewInvoice.items.map((it) => ({ ...it, unitPrice: Number(it.unitPrice) })),
           }}
           company={{ workshopName: settings.workshopName, taxId: settings.taxId, address: settings.address }}
