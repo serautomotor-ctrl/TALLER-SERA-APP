@@ -29,7 +29,7 @@ export function ArticleQrModal({ article, onClose }: { article: Article; onClose
     w.document.write(`
       <html>
         <head><title>Etiqueta ${article.name}</title></head>
-        <body style="font-family: Arial, sans-serif; text-align:center; padding:20px;">
+        <body style="font-family: Arial, sans-serif; text-align:center; padding:20px;" onload="window.print()">
           <h3 style="margin-bottom:2px;">${article.name}</h3>
           <p style="color:#555; margin-top:0;">${fmtEUR(article.price)}</p>
           <img src="${dataUrl}" width="200" height="200" />
@@ -39,7 +39,6 @@ export function ArticleQrModal({ article, onClose }: { article: Article; onClose
     `);
     w.document.close();
     w.focus();
-    w.print();
   };
 
   return (

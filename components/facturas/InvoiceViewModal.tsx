@@ -80,7 +80,7 @@ export function InvoiceViewModal({ invoice, company }: { invoice: Invoice; compa
     w.document.write(`
       <html>
         <head><title>Factura ${invoice.number}</title></head>
-        <body style="font-family: Arial, sans-serif; padding:24px; color:#111;">
+        <body style="font-family: Arial, sans-serif; padding:24px; color:#111;" onload="window.print()">
           <h2 style="margin-bottom:2px;">Factura ${invoice.number}</h2>
           <p style="color:#555; margin-top:0;">${fmtDate(invoice.createdAt)}</p>
           <p><strong>${company.workshopName || ""}</strong><br/>${company.taxId || ""}<br/>${company.address || ""}</p>
@@ -95,7 +95,6 @@ export function InvoiceViewModal({ invoice, company }: { invoice: Invoice; compa
     `);
     w.document.close();
     w.focus();
-    w.print();
   };
 
   const conceptItems = invoice.items.filter((it) => it.kind === "concepto");

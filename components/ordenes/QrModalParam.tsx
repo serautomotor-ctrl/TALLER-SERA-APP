@@ -33,7 +33,7 @@ export function QrModalParam({ order }: { order: { id: string; plate: string } |
     w.document.write(`
       <html>
         <head><title>Etiqueta ${order.plate}</title></head>
-        <body style="font-family: Arial, sans-serif; text-align:center; padding:24px;">
+        <body style="font-family: Arial, sans-serif; text-align:center; padding:24px;" onload="window.print()">
           <h2 style="margin-bottom:4px;">${order.plate}</h2>
           <p style="color:#555; margin-top:0;">Orden ${order.id}</p>
           <img src="${dataUrl}" width="240" height="240" />
@@ -43,7 +43,6 @@ export function QrModalParam({ order }: { order: { id: string; plate: string } |
     `);
     w.document.close();
     w.focus();
-    w.print();
   };
 
   return (
