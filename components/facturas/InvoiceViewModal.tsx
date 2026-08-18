@@ -11,7 +11,7 @@ import { IconPrint } from "@/components/ui/icons";
 import { fmtDate, fmtEUR } from "@/lib/format";
 import { markInvoicePaid, markInvoiceUnpaid, setPartialPayment, updateInvoiceNumber } from "@/app/facturas/actions";
 
-type InvoiceItem = { id: string; concept: string; qty: number; unitPrice: number; vat: number };
+type InvoiceItem = { id: string; concept: string; qty: number; unitPrice: number; discount: number; vat: number; kind: string };
 type Invoice = {
   id: string;
   number: string;
@@ -64,12 +64,19 @@ export function InvoiceViewModal({ invoice, company }: { invoice: Invoice; compa
   const handlePrint = () => {
     const w = window.open("", "_blank", "width=460,height=680");
     if (!w) return;
-    const rows = invoice.items
-      .map(
-        (it) =>
-          `<tr><td>${it.concept}</td><td style="text-align:right">${it.qty}</td><td style="text-align:right">${it.unitPrice.toFixed(2)} EUR</td><td style="text-align:right">${it.vat}%</td></tr>`
-      )
-      .join("");
+
+    const rowsFor = (kind: string) =>
+      invoice.items
+        .filter((it) => it.kind === kind)
+        .map(
+          (it) =>
+            `<tr><td>${it.concept}</td><td style="text-align:right">${it.qty}</td><td style="text-align:right">${it.unitPrice.toFixed(2)} EUR</td><td style="text-align:right">${it.discount ? it.discount + "%" : "-"}</td><td style="text-align:right">${it.vat}%</td></tr>`
+        )
+        .join("");
+    const conceptRows = rowsFor("concepto");
+    const laborRows = rowsFor("mano_obra");
+    const tableHead = `<thead><tr style="border-bottom:1px solid #ccc;"><th style="text-align:left;">Descripcion</th><th>Cant.</th><th>Precio</th><th>Dto.</th><th>IVA</th></tr></thead>`;
+
     w.document.write(`
       <html>
         <head><title>Factura ${invoice.number}</title></head>
@@ -78,10 +85,8 @@ export function InvoiceViewModal({ invoice, company }: { invoice: Invoice; compa
           <p style="color:#555; margin-top:0;">${fmtDate(invoice.createdAt)}</p>
           <p><strong>${company.workshopName || ""}</strong><br/>${company.taxId || ""}<br/>${company.address || ""}</p>
           <p>Cliente: ${invoice.clientName || "-"} ${invoice.clientNif ? "(" + invoice.clientNif + ")" : ""}${invoice.clientAddress ? "<br/>" + invoice.clientAddress : ""}<br/>Vehiculo: ${invoice.plate}</p>
-          <table width="100%" style="border-collapse:collapse; margin-top:12px;">
-            <thead><tr style="border-bottom:1px solid #ccc;"><th style="text-align:left;">Concepto</th><th>Cant.</th><th>Precio</th><th>IVA</th></tr></thead>
-            <tbody>${rows}</tbody>
-          </table>
+          ${conceptRows ? `<p style="margin:14px 0 4px;"><strong>Conceptos</strong></p><table width="100%" style="border-collapse:collapse;">${tableHead}<tbody>${conceptRows}</tbody></table>` : ""}
+          ${laborRows ? `<p style="margin:14px 0 4px;"><strong>Mano de obra</strong></p><table width="100%" style="border-collapse:collapse;">${tableHead}<tbody>${laborRows}</tbody></table>` : ""}
           <p style="margin-top:14px;">Base imponible: ${invoice.subtotal.toFixed(2)} EUR<br/>IVA: ${invoice.vatTotal.toFixed(2)} EUR<br/><strong>Total: ${invoice.total.toFixed(2)} EUR</strong></p>
           ${dataUrl ? `<img src="${dataUrl}" width="130" height="130" style="margin-top:16px;" />` : ""}
           <p style="font-size:10px; color:#888; word-break:break-all;">Hash: ${invoice.hash}</p>
@@ -92,6 +97,9 @@ export function InvoiceViewModal({ invoice, company }: { invoice: Invoice; compa
     w.focus();
     w.print();
   };
+
+  const conceptItems = invoice.items.filter((it) => it.kind === "concepto");
+  const laborItems = invoice.items.filter((it) => it.kind === "mano_obra");
 
   return (
     <Modal title={`Factura ${invoice.number}`} onClose={close}>
@@ -147,16 +155,22 @@ export function InvoiceViewModal({ invoice, company }: { invoice: Invoice; compa
         {numberError && (
           <p style={{ margin: 0, fontFamily: "var(--font-body)", fontSize: 12, color: "var(--color-danger, #c0392b)" }}>{numberError}</p>
         )}
-        <div style={{ display: "flex", flexDirection: "column", gap: 4, background: "var(--color-surface-2)", borderRadius: 8, padding: 10 }}>
-          {invoice.items.map((it) => (
-            <div key={it.id} style={{ display: "flex", justifyContent: "space-between", fontSize: 12.5, fontFamily: "var(--font-body)", color: "var(--color-text-primary)" }}>
-              <span>
-                {it.concept} x{it.qty}
-              </span>
-              <span>{fmtEUR(it.qty * it.unitPrice)}</span>
-            </div>
-          ))}
-        </div>
+        {conceptItems.length > 0 && (
+          <div>
+            <p style={{ margin: "0 0 4px", fontFamily: "var(--font-body)", fontSize: 11, fontWeight: 600, color: "var(--color-text-faint)", textTransform: "uppercase" }}>
+              Conceptos
+            </p>
+            <ItemsList items={conceptItems} />
+          </div>
+        )}
+        {laborItems.length > 0 && (
+          <div>
+            <p style={{ margin: "0 0 4px", fontFamily: "var(--font-body)", fontSize: 11, fontWeight: 600, color: "var(--color-text-faint)", textTransform: "uppercase" }}>
+              Mano de obra
+            </p>
+            <ItemsList items={laborItems} />
+          </div>
+        )}
         <Row label="Base imponible" value={fmtEUR(invoice.subtotal)} />
         <Row label="IVA" value={fmtEUR(invoice.vatTotal)} />
         <Row label="Total" value={fmtEUR(invoice.total)} strong />
@@ -232,6 +246,22 @@ export function InvoiceViewModal({ invoice, company }: { invoice: Invoice; compa
         </Button>
       </div>
     </Modal>
+  );
+}
+
+function ItemsList({ items }: { items: InvoiceItem[] }) {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 4, background: "var(--color-surface-2)", borderRadius: 8, padding: 10 }}>
+      {items.map((it) => (
+        <div key={it.id} style={{ display: "flex", justifyContent: "space-between", fontSize: 12.5, fontFamily: "var(--font-body)", color: "var(--color-text-primary)" }}>
+          <span>
+            {it.concept} x{it.qty}
+            {it.discount > 0 ? ` · -${it.discount}%` : ""}
+          </span>
+          <span>{fmtEUR(it.qty * it.unitPrice * (1 - it.discount / 100))}</span>
+        </div>
+      ))}
+    </div>
   );
 }
 

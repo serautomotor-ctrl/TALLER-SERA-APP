@@ -15,7 +15,11 @@ function nextInvoiceNumber(existingNumbers: string[]) {
   return `${year}-${String(max + 1).padStart(4, "0")}`;
 }
 
-type ItemInput = { concept: string; qty: number; unitPrice: number; vat: number };
+type ItemInput = { concept: string; qty: number; unitPrice: number; discount: number; vat: number; kind: "concepto" | "mano_obra" };
+
+function lineBase(it: ItemInput) {
+  return it.qty * it.unitPrice * (1 - (it.discount || 0) / 100);
+}
 
 export async function createInvoice(data: {
   plate: string;
@@ -27,8 +31,8 @@ export async function createInvoice(data: {
   const validItems = data.items.filter((it) => it.concept.trim());
   if (!data.plate.trim() || validItems.length === 0) return { error: "Faltan datos" };
 
-  const subtotal = validItems.reduce((s, it) => s + it.qty * it.unitPrice, 0);
-  const vatTotal = validItems.reduce((s, it) => s + it.qty * it.unitPrice * (it.vat / 100), 0);
+  const subtotal = validItems.reduce((s, it) => s + lineBase(it), 0);
+  const vatTotal = validItems.reduce((s, it) => s + lineBase(it) * (it.vat / 100), 0);
   const total = subtotal + vatTotal;
 
   const settings = await prisma.settings.findUniqueOrThrow({ where: { id: "singleton" } });
@@ -61,7 +65,16 @@ export async function createInvoice(data: {
       createdAt,
       prevHash,
       hash,
-      items: { create: validItems.map((it) => ({ concept: it.concept.trim(), qty: it.qty, unitPrice: it.unitPrice, vat: it.vat })) },
+      items: {
+        create: validItems.map((it) => ({
+          concept: it.concept.trim(),
+          qty: it.qty,
+          unitPrice: it.unitPrice,
+          discount: it.discount || 0,
+          vat: it.vat,
+          kind: it.kind,
+        })),
+      },
     },
     include: { items: true },
   });

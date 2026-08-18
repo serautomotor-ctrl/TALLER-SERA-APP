@@ -178,14 +178,21 @@ model Invoice {
   items         InvoiceItem[]
 }
 
+enum InvoiceItemKind {
+  concepto
+  mano_obra
+}
+
 model InvoiceItem {
-  id        String  @id @default(cuid())
-  invoice   Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  id        String          @id @default(cuid())
+  invoice   Invoice         @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
   invoiceId String
+  kind      InvoiceItemKind @default(concepto)
   concept   String
-  qty       Int     @default(1)
-  unitPrice Decimal @db.Decimal(10, 2)
-  vat       Int     @default(21)
+  qty       Int             @default(1)
+  unitPrice Decimal         @db.Decimal(10, 2)
+  discount  Int             @default(0)
+  vat       Int             @default(21)
 }
 
 enum AppointmentStatus {

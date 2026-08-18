@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type CSSProperties } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { Field, Select, TextInput } from "@/components/ui/inputs";
@@ -10,9 +10,11 @@ import { fmtEUR } from "@/lib/format";
 import { createInvoice } from "@/app/facturas/actions";
 
 type Vehicle = { id: string; plate: string; clientName: string; clientNif: string; clientAddress: string };
-type Item = { id: number; concept: string; qty: number; unitPrice: number; vat: number };
+type ItemKind = "concepto" | "mano_obra";
+type Item = { id: number; kind: ItemKind; concept: string; qty: number; unitPrice: number; discount: number; vat: number };
 
 let nextId = 1;
+const blankItem = (kind: ItemKind): Item => ({ id: nextId++, kind, concept: "", qty: 1, unitPrice: 0, discount: 0, vat: 21 });
 
 export function NewInvoiceButton({ vehicles }: { vehicles: Vehicle[] }) {
   const router = useRouter();
@@ -21,7 +23,7 @@ export function NewInvoiceButton({ vehicles }: { vehicles: Vehicle[] }) {
   const [clientName, setClientName] = useState("");
   const [clientNif, setClientNif] = useState("");
   const [clientAddress, setClientAddress] = useState("");
-  const [items, setItems] = useState<Item[]>([{ id: nextId++, concept: "", qty: 1, unitPrice: 0, vat: 21 }]);
+  const [items, setItems] = useState<Item[]>([blankItem("concepto")]);
   const [submitting, setSubmitting] = useState(false);
 
   const reset = () => {
@@ -29,7 +31,7 @@ export function NewInvoiceButton({ vehicles }: { vehicles: Vehicle[] }) {
     setClientName("");
     setClientNif("");
     setClientAddress("");
-    setItems([{ id: nextId++, concept: "", qty: 1, unitPrice: 0, vat: 21 }]);
+    setItems([blankItem("concepto")]);
   };
 
   const handlePlateChange = (value: string) => {
@@ -46,11 +48,12 @@ export function NewInvoiceButton({ vehicles }: { vehicles: Vehicle[] }) {
   const updateItem = (id: number, patch: Partial<Item>) => {
     setItems((prev) => prev.map((it) => (it.id === id ? { ...it, ...patch } : it)));
   };
-  const addItem = () => setItems((prev) => [...prev, { id: nextId++, concept: "", qty: 1, unitPrice: 0, vat: 21 }]);
+  const addItem = (kind: ItemKind) => setItems((prev) => [...prev, blankItem(kind)]);
   const removeItem = (id: number) => setItems((prev) => prev.filter((it) => it.id !== id));
 
-  const subtotal = items.reduce((s, it) => s + it.qty * it.unitPrice, 0);
-  const vatTotal = items.reduce((s, it) => s + it.qty * it.unitPrice * (it.vat / 100), 0);
+  const lineBase = (it: Item) => it.qty * it.unitPrice * (1 - (it.discount || 0) / 100);
+  const subtotal = items.reduce((s, it) => s + lineBase(it), 0);
+  const vatTotal = items.reduce((s, it) => s + lineBase(it) * (it.vat / 100), 0);
   const total = subtotal + vatTotal;
   const canSubmit = plate.trim() && items.some((it) => it.concept.trim());
 
@@ -95,49 +98,25 @@ export function NewInvoiceButton({ vehicles }: { vehicles: Vehicle[] }) {
               </Field>
             </div>
 
-            <div>
-              <span style={{ fontSize: 12, fontWeight: 600, color: "var(--color-text-muted)", letterSpacing: 0.3, textTransform: "uppercase" }}>Conceptos</span>
-              <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 8 }}>
-                {items.map((it) => (
-                  <div key={it.id} style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) 44px 64px 52px 20px", gap: 6, alignItems: "center" }}>
-                    <TextInput
-                      placeholder="Concepto"
-                      value={it.concept}
-                      onChange={(e) => updateItem(it.id, { concept: e.target.value })}
-                      style={{ fontSize: 12.5, padding: "6px 8px" }}
-                    />
-                    <TextInput
-                      type="number"
-                      min="0"
-                      value={it.qty}
-                      onChange={(e) => updateItem(it.id, { qty: Number(e.target.value) || 0 })}
-                      style={{ fontSize: 12.5, padding: "6px 6px" }}
-                    />
-                    <TextInput
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      placeholder="Precio"
-                      value={it.unitPrice}
-                      onChange={(e) => updateItem(it.id, { unitPrice: Number(e.target.value) || 0 })}
-                      style={{ fontSize: 12.5, padding: "6px 6px" }}
-                    />
-                    <Select value={it.vat} onChange={(e) => updateItem(it.id, { vat: Number(e.target.value) })} style={{ fontSize: 12, padding: "6px 4px" }}>
-                      <option value={21}>21%</option>
-                      <option value={10}>10%</option>
-                      <option value={4}>4%</option>
-                      <option value={0}>0%</option>
-                    </Select>
-                    <button type="button" onClick={() => removeItem(it.id)} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--color-text-faint)" }}>
-                      <IconTrash />
-                    </button>
-                  </div>
-                ))}
-              </div>
-              <Button variant="ghost" type="button" onClick={addItem} style={{ marginTop: 8 }}>
-                <IconPlus /> Anadir concepto
-              </Button>
-            </div>
+            <ItemsSection
+              title="Conceptos"
+              placeholder="Pieza, servicio..."
+              addLabel="Anadir concepto"
+              items={items.filter((it) => it.kind === "concepto")}
+              updateItem={updateItem}
+              removeItem={removeItem}
+              onAdd={() => addItem("concepto")}
+            />
+
+            <ItemsSection
+              title="Mano de obra"
+              placeholder="Descripcion del trabajo realizado"
+              addLabel="Anadir mano de obra"
+              items={items.filter((it) => it.kind === "mano_obra")}
+              updateItem={updateItem}
+              removeItem={removeItem}
+              onAdd={() => addItem("mano_obra")}
+            />
 
             <div style={{ borderTop: "1px solid var(--color-border)", paddingTop: 10, display: "flex", flexDirection: "column", gap: 3 }}>
               <Row label="Base imponible" value={fmtEUR(subtotal)} />
@@ -154,6 +133,100 @@ export function NewInvoiceButton({ vehicles }: { vehicles: Vehicle[] }) {
     </>
   );
 }
+
+const ROW_COLUMNS = "minmax(0, 1fr) 40px 58px 44px 48px 20px";
+
+function ItemsSection({
+  title,
+  placeholder,
+  addLabel,
+  items,
+  updateItem,
+  removeItem,
+  onAdd,
+}: {
+  title: string;
+  placeholder: string;
+  addLabel: string;
+  items: Item[];
+  updateItem: (id: number, patch: Partial<Item>) => void;
+  removeItem: (id: number) => void;
+  onAdd: () => void;
+}) {
+  return (
+    <div>
+      <span style={{ fontSize: 12, fontWeight: 600, color: "var(--color-text-muted)", letterSpacing: 0.3, textTransform: "uppercase" }}>{title}</span>
+      <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 8 }}>
+        {items.length > 0 && (
+          <div style={{ display: "grid", gridTemplateColumns: ROW_COLUMNS, gap: 6 }}>
+            <span style={labelStyle}>Descripcion</span>
+            <span style={labelStyle}>Cant.</span>
+            <span style={labelStyle}>Precio</span>
+            <span style={labelStyle}>Dto. %</span>
+            <span style={labelStyle}>IVA</span>
+            <span />
+          </div>
+        )}
+        {items.map((it) => (
+          <div key={it.id} style={{ display: "grid", gridTemplateColumns: ROW_COLUMNS, gap: 6, alignItems: "center" }}>
+            <TextInput
+              placeholder={placeholder}
+              value={it.concept}
+              onChange={(e) => updateItem(it.id, { concept: e.target.value })}
+              style={{ fontSize: 12.5, padding: "6px 8px" }}
+            />
+            <TextInput
+              type="number"
+              min="0"
+              value={it.qty}
+              onChange={(e) => updateItem(it.id, { qty: Number(e.target.value) || 0 })}
+              style={{ fontSize: 12.5, padding: "6px 6px" }}
+            />
+            <TextInput
+              type="number"
+              min="0"
+              step="0.01"
+              placeholder="Precio"
+              value={it.unitPrice}
+              onChange={(e) => updateItem(it.id, { unitPrice: Number(e.target.value) || 0 })}
+              style={{ fontSize: 12.5, padding: "6px 6px" }}
+            />
+            <TextInput
+              type="number"
+              min="0"
+              max="100"
+              placeholder="0"
+              value={it.discount}
+              onChange={(e) => updateItem(it.id, { discount: Number(e.target.value) || 0 })}
+              style={{ fontSize: 12.5, padding: "6px 6px" }}
+            />
+            <Select value={it.vat} onChange={(e) => updateItem(it.id, { vat: Number(e.target.value) })} style={{ fontSize: 12, padding: "6px 4px" }}>
+              <option value={21}>21%</option>
+              <option value={10}>10%</option>
+              <option value={4}>4%</option>
+              <option value={0}>0%</option>
+            </Select>
+            <button type="button" onClick={() => removeItem(it.id)} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--color-text-faint)" }}>
+              <IconTrash />
+            </button>
+          </div>
+        ))}
+      </div>
+      <Button variant="ghost" type="button" onClick={onAdd} style={{ marginTop: 8 }}>
+        <IconPlus /> {addLabel}
+      </Button>
+    </div>
+  );
+}
+
+const labelStyle: CSSProperties = {
+  fontFamily: "var(--font-body)",
+  fontSize: 10.5,
+  fontWeight: 600,
+  color: "var(--color-text-faint)",
+  textTransform: "uppercase",
+  letterSpacing: 0.2,
+};
 
 function Row({ label, value, strong }: { label: string; value: string; strong?: boolean }) {
   return (
