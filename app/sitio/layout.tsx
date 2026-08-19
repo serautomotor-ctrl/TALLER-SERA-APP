@@ -13,7 +13,7 @@ export default async function SitioLayout({ children }: { children: ReactNode })
   return (
     <CartProvider>
       <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", background: "var(--color-bg)" }}>
-        <PublicHeader workshopName={settings.workshopName} />
+        <PublicHeader workshopName={settings.workshopName} logoUrl={settings.logoUrl} />
         <main style={{ flex: 1, maxWidth: 1100, width: "100%", margin: "0 auto", padding: "24px 20px" }}>{children}</main>
         <PublicFooter
           workshopName={settings.workshopName}

@@ -29,7 +29,7 @@ type Invoice = {
   paidAmount: number;
   items: InvoiceItem[];
 };
-type Company = { workshopName: string; taxId: string; address: string };
+type Company = { workshopName: string; taxId: string; address: string; logoUrl: string };
 
 const PAYMENT_STATUS: Record<string, { label: string; tone: "success" | "warning" | "muted" }> = {
   cobrada: { label: "Cobrada", tone: "success" },
@@ -80,9 +80,16 @@ export function InvoiceViewModal({ invoice, company }: { invoice: Invoice; compa
     w.document.write(`
       <html>
         <head><title>Factura ${invoice.number}</title></head>
-        <body style="font-family: Arial, sans-serif; padding:24px; color:#111;" onload="window.print()">
-          <h2 style="margin-bottom:2px;">Factura ${invoice.number}</h2>
-          <p style="color:#555; margin-top:0;">${fmtDate(invoice.createdAt)}</p>
+        <body style="font-family: Arial, sans-serif; padding:24px; color:#111; position:relative;" onload="window.print()">
+          ${company.logoUrl ? `<img src="${company.logoUrl}" style="position:fixed; top:50%; left:50%; width:340px; height:340px; object-fit:contain; transform:translate(-50%,-50%); opacity:0.09; z-index:0;" />` : ""}
+          <div style="position:relative; z-index:1;">
+          <div style="display:flex; align-items:center; gap:12px;">
+            ${company.logoUrl ? `<img src="${company.logoUrl}" style="width:56px; height:56px; object-fit:contain;" />` : ""}
+            <div>
+              <h2 style="margin-bottom:2px;">Factura ${invoice.number}</h2>
+              <p style="color:#555; margin-top:0;">${fmtDate(invoice.createdAt)}</p>
+            </div>
+          </div>
           <p><strong>${company.workshopName || ""}</strong><br/>${company.taxId || ""}<br/>${company.address || ""}</p>
           <p>Cliente: ${invoice.clientName || "-"} ${invoice.clientNif ? "(" + invoice.clientNif + ")" : ""}${invoice.clientAddress ? "<br/>" + invoice.clientAddress : ""}<br/>Vehiculo: ${invoice.plate}</p>
           ${conceptRows ? `<p style="margin:14px 0 4px;"><strong>Conceptos</strong></p><table width="100%" style="border-collapse:collapse;">${tableHead}<tbody>${conceptRows}</tbody></table>` : ""}
@@ -90,6 +97,7 @@ export function InvoiceViewModal({ invoice, company }: { invoice: Invoice; compa
           <p style="margin-top:14px;">Base imponible: ${invoice.subtotal.toFixed(2)} EUR<br/>IVA: ${invoice.vatTotal.toFixed(2)} EUR<br/><strong>Total: ${invoice.total.toFixed(2)} EUR</strong></p>
           ${dataUrl ? `<img src="${dataUrl}" width="130" height="130" style="margin-top:16px;" />` : ""}
           <p style="font-size:10px; color:#888; word-break:break-all;">Hash: ${invoice.hash}</p>
+          </div>
         </body>
       </html>
     `);
@@ -103,6 +111,10 @@ export function InvoiceViewModal({ invoice, company }: { invoice: Invoice; compa
   return (
     <Modal title={`Factura ${invoice.number}`} onClose={close}>
       <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+        {company.logoUrl && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={company.logoUrl} alt={company.workshopName} style={{ width: 48, height: 48, objectFit: "contain", background: "#fff", borderRadius: 8, padding: 4 }} />
+        )}
         <p style={{ margin: 0, fontFamily: "var(--font-body)", fontSize: 13, color: "var(--color-text-muted)" }}>
           {invoice.clientName || "Sin cliente"} {invoice.clientNif ? `· ${invoice.clientNif}` : ""} · {invoice.plate}
           {invoice.clientAddress ? <><br />{invoice.clientAddress}</> : null}

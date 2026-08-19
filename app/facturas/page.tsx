@@ -121,7 +121,7 @@ export default async function FacturasPage({ searchParams }: { searchParams: Pro
             paidAmount: Number(viewInvoice.paidAmount),
             items: viewInvoice.items.map((it) => ({ ...it, unitPrice: Number(it.unitPrice) })),
           }}
-          company={{ workshopName: settings.workshopName, taxId: settings.taxId, address: settings.address }}
+          company={{ workshopName: settings.workshopName, taxId: settings.taxId, address: settings.address, logoUrl: settings.logoUrl }}
         />
       )}
     </div>

@@ -6,6 +6,7 @@ import { Field, TextArea, TextInput } from "@/components/ui/inputs";
 import { ChangePasswordForm } from "@/components/ajustes/ChangePasswordForm";
 import { ChecklistEditor } from "@/components/ajustes/ChecklistEditor";
 import { AiKeyForm } from "@/components/ajustes/AiKeyForm";
+import { LogoUploadForm } from "@/components/ajustes/LogoUploadForm";
 import { prisma } from "@/lib/prisma";
 import { updateNextInvoiceNumber, updateSettings, updateWebSettings } from "./actions";
 
@@ -20,6 +21,15 @@ export default async function AjustesPage() {
       <div style={{ display: "flex", flexDirection: "column", gap: 14, maxWidth: 560 }}>
         <Card>
           <SectionTitle>Datos del taller</SectionTitle>
+          <div style={{ marginTop: 12, marginBottom: 4 }}>
+            <p style={{ margin: "0 0 8px", fontFamily: "var(--font-body)", fontSize: 12, fontWeight: 600, color: "var(--color-text-muted)", textTransform: "uppercase" }}>
+              Logo del taller
+            </p>
+            <LogoUploadForm logoUrl={settings.logoUrl} />
+            <p style={{ margin: "8px 0 0", fontFamily: "var(--font-body)", fontSize: 12, color: "var(--color-text-faint)" }}>
+              Aparece en las facturas (tambien como marca de agua de fondo) y en la web publica.
+            </p>
+          </div>
           <form action={updateSettings} style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 12 }}>
             <Field label="Nombre o razon social">
               <TextInput name="workshopName" defaultValue={settings.workshopName} style={{ width: "100%" }} />

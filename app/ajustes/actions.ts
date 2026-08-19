@@ -20,6 +20,20 @@ export async function updateSettings(formData: FormData) {
   revalidatePath("/");
 }
 
+export async function updateLogo(dataUrl: string) {
+  await prisma.settings.update({ where: { id: "singleton" }, data: { logoUrl: dataUrl } });
+  revalidatePath("/ajustes");
+  revalidatePath("/facturas");
+  revalidatePath("/sitio");
+}
+
+export async function removeLogo() {
+  await prisma.settings.update({ where: { id: "singleton" }, data: { logoUrl: "" } });
+  revalidatePath("/ajustes");
+  revalidatePath("/facturas");
+  revalidatePath("/sitio");
+}
+
 export async function updateWebSettings(formData: FormData) {
   await prisma.settings.update({
     where: { id: "singleton" },

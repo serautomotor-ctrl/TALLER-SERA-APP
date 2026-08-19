@@ -14,7 +14,7 @@ const NAV_ITEMS = [
   { href: "/sitio/contacto", label: "Contacto" },
 ];
 
-export function PublicHeader({ workshopName }: { workshopName: string }) {
+export function PublicHeader({ workshopName, logoUrl }: { workshopName: string; logoUrl: string }) {
   const pathname = usePathname();
   const { count } = useCart();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -31,9 +31,14 @@ export function PublicHeader({ workshopName }: { workshopName: string }) {
     >
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, padding: "14px 20px", maxWidth: 1100, margin: "0 auto" }}>
         <Link href="/sitio" style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <div style={{ width: 30, height: 30, borderRadius: 8, background: "var(--color-accent)", display: "flex", alignItems: "center", justifyContent: "center", color: "#1A0E04", flexShrink: 0 }}>
-            <IconWrench />
-          </div>
+          {logoUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={logoUrl} alt={workshopName} style={{ width: 34, height: 34, objectFit: "contain", borderRadius: 6, flexShrink: 0 }} />
+          ) : (
+            <div style={{ width: 30, height: 30, borderRadius: 8, background: "var(--color-accent)", display: "flex", alignItems: "center", justifyContent: "center", color: "#1A0E04", flexShrink: 0 }}>
+              <IconWrench />
+            </div>
+          )}
           <span style={{ fontFamily: "var(--font-display)", fontWeight: 700, fontSize: 18, color: "var(--color-text-primary)", textTransform: "uppercase", letterSpacing: 0.5 }}>
             {workshopName}
           </span>
