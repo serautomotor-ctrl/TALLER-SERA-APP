@@ -237,6 +237,16 @@ export function IconCart(props: IconProps) {
   );
 }
 
+export function IconEstimate(props: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.8" {...props}>
+      <path d="M6 3.5h9l3 3V20a.5.5 0 0 1-.5.5h-11A.5.5 0 0 1 6 20Z" strokeLinejoin="round" />
+      <path d="M9 9h6M9 12.5h4" strokeLinecap="round" />
+      <path d="M9.3 16.7l1.4 1.4 3.2-3.4" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
 export function IconTrash(props: IconProps) {
   return (
     <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.8" {...props}>

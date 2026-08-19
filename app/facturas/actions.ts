@@ -15,7 +15,7 @@ function nextInvoiceNumber(existingNumbers: string[]) {
   return `${year}-${String(max + 1).padStart(4, "0")}`;
 }
 
-type ItemInput = { concept: string; qty: number; unitPrice: number; discount: number; vat: number; kind: "concepto" | "mano_obra" };
+export type ItemInput = { concept: string; qty: number; unitPrice: number; discount: number; vat: number; kind: "concepto" | "mano_obra" };
 
 function lineBase(it: ItemInput) {
   return it.qty * it.unitPrice * (1 - (it.discount || 0) / 100);

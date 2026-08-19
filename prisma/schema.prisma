@@ -195,6 +195,33 @@ model InvoiceItem {
   vat       Int             @default(21)
 }
 
+model Budget {
+  id            String       @id @default(cuid())
+  number        String       @unique
+  plate         String
+  clientName    String       @default("")
+  clientNif     String       @default("")
+  clientAddress String       @default("")
+  subtotal      Decimal      @db.Decimal(10, 2)
+  vatTotal      Decimal      @db.Decimal(10, 2)
+  total         Decimal      @db.Decimal(10, 2)
+  createdAt     DateTime     @default(now())
+  invoiceId     String?
+  items         BudgetItem[]
+}
+
+model BudgetItem {
+  id        String          @id @default(cuid())
+  budget    Budget          @relation(fields: [budgetId], references: [id], onDelete: Cascade)
+  budgetId  String
+  kind      InvoiceItemKind @default(concepto)
+  concept   String
+  qty       Int             @default(1)
+  unitPrice Decimal         @db.Decimal(10, 2)
+  discount  Int             @default(0)
+  vat       Int             @default(21)
+}
+
 enum AppointmentStatus {
   pendiente
   confirmada
