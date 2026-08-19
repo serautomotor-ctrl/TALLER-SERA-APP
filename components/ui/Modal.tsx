@@ -27,6 +27,8 @@ export function Modal({ title, onClose, children }: { title: string; onClose: ()
           padding: 20,
           width: "100%",
           maxWidth: 420,
+          maxHeight: "88vh",
+          overflowY: "auto",
         }}
       >
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
