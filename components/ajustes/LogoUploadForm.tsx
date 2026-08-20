@@ -3,34 +3,35 @@
 import { useRef, useState, useTransition } from "react";
 import { Button } from "@/components/ui/Button";
 import { IconCamera, IconTrash } from "@/components/ui/icons";
-import { compressLogo } from "@/lib/image";
+import { LogoCropModal } from "./LogoCropModal";
 import { removeLogo, updateLogo } from "@/app/ajustes/actions";
 
 export function LogoUploadForm({ logoUrl }: { logoUrl: string }) {
   const [, startTransition] = useTransition();
   const [uploading, setUploading] = useState(false);
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const processFile = async (file: File) => {
+  const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (file) setPendingFile(file);
+  };
+
+  const handlePaste = (e: React.ClipboardEvent<HTMLDivElement>) => {
+    const item = Array.from(e.clipboardData.items).find((i) => i.type.startsWith("image/"));
+    const file = item?.getAsFile();
+    if (file) setPendingFile(file);
+  };
+
+  const handleCropConfirm = async (dataUrl: string) => {
+    setPendingFile(null);
     setUploading(true);
     try {
-      const dataUrl = await compressLogo(file);
       await updateLogo(dataUrl);
     } finally {
       setUploading(false);
     }
-  };
-
-  const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    e.target.value = "";
-    if (file) await processFile(file);
-  };
-
-  const handlePaste = async (e: React.ClipboardEvent<HTMLDivElement>) => {
-    const item = Array.from(e.clipboardData.items).find((i) => i.type.startsWith("image/"));
-    const file = item?.getAsFile();
-    if (file) await processFile(file);
   };
 
   return (
@@ -59,7 +60,7 @@ export function LogoUploadForm({ logoUrl }: { logoUrl: string }) {
       <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
         <div style={{ display: "flex", gap: 8 }}>
           <Button type="button" variant="ghost" disabled={uploading} onClick={() => fileInputRef.current?.click()}>
-            <IconCamera /> {uploading ? "Subiendo..." : logoUrl ? "Cambiar logo" : "Subir logo"}
+            <IconCamera /> {uploading ? "Guardando..." : logoUrl ? "Cambiar logo" : "Subir logo"}
           </Button>
           {logoUrl && (
             <button
@@ -78,6 +79,10 @@ export function LogoUploadForm({ logoUrl }: { logoUrl: string }) {
           </p>
         )}
       </div>
+
+      {pendingFile && (
+        <LogoCropModal file={pendingFile} onCancel={() => setPendingFile(null)} onConfirm={handleCropConfirm} />
+      )}
     </div>
   );
 }
