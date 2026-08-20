@@ -92,7 +92,17 @@ export default async function PresupuestosPage({ searchParams }: { searchParams:
             total: Number(viewBudget.total),
             items: viewBudget.items.map((it) => ({ ...it, unitPrice: Number(it.unitPrice) })),
           }}
-          company={{ workshopName: settings.workshopName, taxId: settings.taxId, address: settings.address, logoUrl: settings.logoUrl }}
+          company={{
+            workshopName: settings.workshopName,
+            taxId: settings.taxId,
+            address: settings.address,
+            postalCode: settings.postalCode,
+            city: settings.city,
+            province: settings.province,
+            phone: settings.phone,
+            email: settings.email,
+            logoUrl: settings.logoUrl,
+          }}
         />
       )}
     </div>

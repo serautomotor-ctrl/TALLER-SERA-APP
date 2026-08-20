@@ -40,6 +40,17 @@ export default async function AjustesPage() {
             <Field label="Direccion">
               <TextInput name="address" defaultValue={settings.address} style={{ width: "100%" }} />
             </Field>
+            <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) minmax(0, 2fr) minmax(0, 2fr)", gap: 10 }}>
+              <Field label="Codigo postal">
+                <TextInput name="postalCode" defaultValue={settings.postalCode} style={{ width: "100%" }} />
+              </Field>
+              <Field label="Ciudad">
+                <TextInput name="city" defaultValue={settings.city} style={{ width: "100%" }} />
+              </Field>
+              <Field label="Provincia">
+                <TextInput name="province" defaultValue={settings.province} style={{ width: "100%" }} />
+              </Field>
+            </div>
             <Field label="Telefono">
               <TextInput name="phone" defaultValue={settings.phone} style={{ width: "100%" }} />
             </Field>

@@ -24,7 +24,17 @@ type Budget = {
   invoiceId: string | null;
   items: BudgetItem[];
 };
-type Company = { workshopName: string; taxId: string; address: string; logoUrl: string };
+type Company = {
+  workshopName: string;
+  taxId: string;
+  address: string;
+  postalCode: string;
+  city: string;
+  province: string;
+  phone: string;
+  email: string;
+  logoUrl: string;
+};
 
 export function BudgetViewModal({ budget, company }: { budget: Budget; company: Company }) {
   const router = useRouter();
@@ -34,39 +44,62 @@ export function BudgetViewModal({ budget, company }: { budget: Budget; company: 
   const close = () => router.replace("/presupuestos");
 
   const handlePrint = () => {
-    const w = window.open("", "_blank", "width=460,height=680");
+    const w = window.open("", "_blank", "width=520,height=720");
     if (!w) return;
 
+    const lineTotal = (it: BudgetItem) => it.qty * it.unitPrice * (1 - it.discount / 100);
     const rowsFor = (kind: string) =>
       budget.items
         .filter((it) => it.kind === kind)
         .map(
           (it) =>
-            `<tr><td>${it.concept}</td><td style="text-align:right">${it.qty}</td><td style="text-align:right">${it.unitPrice.toFixed(2)} EUR</td><td style="text-align:right">${it.discount ? it.discount + "%" : "-"}</td><td style="text-align:right">${it.vat}%</td></tr>`
+            `<tr><td>${it.concept}</td><td style="text-align:right">${it.qty}</td><td style="text-align:right">${it.unitPrice.toFixed(2)} EUR</td><td style="text-align:right">${it.discount ? it.discount + "%" : "-"}</td><td style="text-align:right">${it.vat}%</td><td style="text-align:right"><strong>${lineTotal(it).toFixed(2)} EUR</strong></td></tr>`
         )
         .join("");
     const conceptRows = rowsFor("concepto");
     const laborRows = rowsFor("mano_obra");
-    const tableHead = `<thead><tr style="border-bottom:1px solid #ccc;"><th style="text-align:left;">Descripcion</th><th>Cant.</th><th>Precio</th><th>Dto.</th><th>IVA</th></tr></thead>`;
+    const tableHead = `<thead><tr style="border-bottom:1px solid #999;"><th style="text-align:left;">Descripcion</th><th>Cant.</th><th>Precio</th><th>Dto.</th><th>IVA</th><th>Total</th></tr></thead>`;
+
+    const cityLine = [company.postalCode, company.city].filter(Boolean).join("  ");
+    const locationLine = [cityLine, company.province].filter(Boolean).join("    ");
 
     w.document.write(`
       <html>
         <head><title>Presupuesto ${budget.number}</title></head>
-        <body style="font-family: Arial, sans-serif; padding:24px; color:#111; position:relative;" onload="window.print()">
+        <body style="font-family: Arial, sans-serif; padding:24px; color:#111; position:relative; font-size:13px;" onload="window.print()">
           ${company.logoUrl ? `<img src="${company.logoUrl}" style="position:fixed; top:50%; left:50%; width:340px; height:340px; object-fit:contain; transform:translate(-50%,-50%); opacity:0.09; z-index:0;" />` : ""}
           <div style="position:relative; z-index:1;">
-          <div style="display:flex; align-items:center; gap:12px;">
-            ${company.logoUrl ? `<img src="${company.logoUrl}" style="width:56px; height:56px; object-fit:contain;" />` : ""}
-            <div>
-              <h2 style="margin-bottom:2px;">Presupuesto ${budget.number}</h2>
-              <p style="color:#555; margin-top:0;">${fmtDate(budget.createdAt)}</p>
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; border-bottom:2px solid #111; padding-bottom:12px;">
+            <div style="display:flex; align-items:center; gap:12px;">
+              ${company.logoUrl ? `<img src="${company.logoUrl}" style="width:60px; height:60px; object-fit:contain;" />` : ""}
+              <div>
+                <p style="margin:0; font-size:19px; font-weight:bold;">${company.workshopName || ""}</p>
+                ${company.address ? `<p style="margin:2px 0 0; color:#333;">${company.address}</p>` : ""}
+                ${locationLine ? `<p style="margin:0; color:#333;">${locationLine}</p>` : ""}
+                ${company.taxId ? `<p style="margin:2px 0 0; color:#333;">NIF: ${company.taxId}</p>` : ""}
+                <p style="margin:2px 0 0; color:#333;">${company.phone ? `Tel: ${company.phone}` : ""}${company.phone && company.email ? "  ·  " : ""}${company.email ? `${company.email}` : ""}</p>
+              </div>
+            </div>
+            <div style="text-align:right; border:1px solid #999; border-radius:6px; padding:8px 12px;">
+              <p style="margin:0; font-weight:bold;">PRESUPUESTO: ${budget.number}</p>
+              <p style="margin:2px 0 0; color:#333;">Fecha: ${fmtDate(budget.createdAt)}</p>
             </div>
           </div>
-          <p><strong>${company.workshopName || ""}</strong><br/>${company.taxId || ""}<br/>${company.address || ""}</p>
-          <p>Cliente: ${budget.clientName || "-"} ${budget.clientNif ? "(" + budget.clientNif + ")" : ""}${budget.clientAddress ? "<br/>" + budget.clientAddress : ""}<br/>Vehiculo: ${budget.plate}</p>
+          <p style="margin-top:12px;">Cliente: ${budget.clientName || "-"} ${budget.clientNif ? "(" + budget.clientNif + ")" : ""}${budget.clientAddress ? "<br/>" + budget.clientAddress : ""}<br/>Vehiculo: ${budget.plate}</p>
           ${conceptRows ? `<p style="margin:14px 0 4px;"><strong>Conceptos</strong></p><table width="100%" style="border-collapse:collapse;">${tableHead}<tbody>${conceptRows}</tbody></table>` : ""}
           ${laborRows ? `<p style="margin:14px 0 4px;"><strong>Mano de obra</strong></p><table width="100%" style="border-collapse:collapse;">${tableHead}<tbody>${laborRows}</tbody></table>` : ""}
-          <p style="margin-top:14px;">Base imponible: ${budget.subtotal.toFixed(2)} EUR<br/>IVA: ${budget.vatTotal.toFixed(2)} EUR<br/><strong>Total: ${budget.total.toFixed(2)} EUR</strong></p>
+          <div style="display:flex; justify-content:flex-end; margin-top:20px;">
+            <div style="display:flex; align-items:stretch; gap:0;">
+              <div style="border:1px solid #999; border-right:none; border-radius:6px 0 0 6px; padding:10px 16px; text-align:right;">
+                <p style="margin:0 0 6px;">Base imponible: <strong>${budget.subtotal.toFixed(2)} EUR</strong></p>
+                <p style="margin:0;">IVA: <strong>${budget.vatTotal.toFixed(2)} EUR</strong></p>
+              </div>
+              <div style="border:2px solid #111; border-radius:0 6px 6px 0; padding:10px 18px; display:flex; flex-direction:column; justify-content:center; align-items:flex-end;">
+                <span style="font-size:11px; text-transform:uppercase; color:#333;">Total presupuesto</span>
+                <span style="font-size:24px; font-weight:bold;">${budget.total.toFixed(2)} EUR</span>
+              </div>
+            </div>
+          </div>
           <p style="margin-top:18px; font-size:11px; color:#888;">Presupuesto sin validez de factura. Sujeto a confirmacion.</p>
           </div>
         </body>
