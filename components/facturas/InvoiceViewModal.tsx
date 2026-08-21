@@ -58,7 +58,8 @@ export function InvoiceViewModal({ invoice, company }: { invoice: Invoice; compa
 
   useEffect(() => {
     let cancelled = false;
-    QRCode.toDataURL(`FACTURA:${invoice.number}|TOTAL:${invoice.total.toFixed(2)}|HASH:${invoice.hash.slice(0, 16)}`, {
+    const targetUrl = `${window.location.origin}/facturas?id=${invoice.id}`;
+    QRCode.toDataURL(targetUrl, {
       width: 160,
       margin: 1,
     }).then((url) => {
@@ -67,7 +68,7 @@ export function InvoiceViewModal({ invoice, company }: { invoice: Invoice; compa
     return () => {
       cancelled = true;
     };
-  }, [invoice.number, invoice.total, invoice.hash]);
+  }, [invoice.id]);
 
   const close = () => router.replace("/facturas");
 

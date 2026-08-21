@@ -14,7 +14,8 @@ export function QrModalParam({ order }: { order: { id: string; plate: string } |
   useEffect(() => {
     if (!order) return;
     let cancelled = false;
-    QRCode.toDataURL(`ORDEN:${order.id}|MATRICULA:${order.plate}`, { width: 260, margin: 1 }).then((url) => {
+    const targetUrl = `${window.location.origin}/ordenes?qr=${order.id}`;
+    QRCode.toDataURL(targetUrl, { width: 260, margin: 1 }).then((url) => {
       if (!cancelled) setDataUrl(url);
     });
     return () => {
