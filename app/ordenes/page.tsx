@@ -1,10 +1,9 @@
 import Link from "next/link";
 import { Card } from "@/components/ui/Card";
 import { Header } from "@/components/ui/Header";
-import { IconWrench, IconQr } from "@/components/ui/icons";
+import { IconWrench, IconQr, IconBarcode } from "@/components/ui/icons";
 import { Button } from "@/components/ui/Button";
 import { NewOrderButton } from "@/components/ordenes/NewOrderButton";
-import { ArticlesCatalogButton } from "@/components/ordenes/ArticlesCatalogButton";
 import { OrderStatusSelect } from "@/components/ordenes/OrderStatusSelect";
 import { OrderTimerControls } from "@/components/ordenes/OrderTimerControls";
 import { OrderArticlesPanel } from "@/components/ordenes/OrderArticlesPanel";
@@ -32,7 +31,11 @@ export default async function OrdenesPage({ searchParams }: { searchParams: Prom
         subtitle="Crea la orden de reparacion, controla el tiempo, anade articulos y genera etiquetas QR"
         right={
           <div style={{ display: "flex", gap: 8 }}>
-            <ArticlesCatalogButton articles={articles.map((a) => ({ id: a.id, name: a.name, price: Number(a.price), costPrice: Number(a.costPrice) }))} />
+            <Link href="/articulos">
+              <Button variant="ghost" type="button">
+                <IconBarcode /> Articulos
+              </Button>
+            </Link>
             <NewOrderButton />
           </div>
         }

@@ -78,9 +78,11 @@ export async function createArticle(formData: FormData) {
   if (!name || !Number.isFinite(price)) return;
   await prisma.article.create({ data: { name, price, costPrice } });
   revalidatePath("/ordenes");
+  revalidatePath("/articulos");
 }
 
 export async function removeArticle(articleId: string) {
   await prisma.article.delete({ where: { id: articleId } });
   revalidatePath("/ordenes");
+  revalidatePath("/articulos");
 }

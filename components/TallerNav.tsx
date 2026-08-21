@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 import { logout } from "@/app/login/actions";
 import {
+  IconBarcode,
   IconCalendar,
   IconChart,
   IconClipboard,
@@ -28,6 +29,7 @@ const NAV_ITEMS = [
   { href: "/agenda", label: "Agenda", icon: IconCalendar },
   { href: "/recepcion", label: "Recepcion", icon: IconClipboard },
   { href: "/ordenes", label: "Ordenes y QR", icon: IconQr },
+  { href: "/articulos", label: "Articulos", icon: IconBarcode },
   { href: "/presupuestos", label: "Presupuestos", icon: IconEstimate },
   { href: "/facturas", label: "Facturas", icon: IconInvoice },
   { href: "/diagnostico", label: "Diagnostico", icon: IconSparkle },
