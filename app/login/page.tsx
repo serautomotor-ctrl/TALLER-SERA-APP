@@ -5,9 +5,9 @@ import { login } from "./actions";
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string }>;
+  searchParams: Promise<{ error?: string; next?: string }>;
 }) {
-  const { error } = await searchParams;
+  const { error, next } = await searchParams;
 
   return (
     <div
@@ -66,6 +66,7 @@ export default async function LoginPage({
           </h1>
         </div>
 
+        {next && <input type="hidden" name="next" value={next} />}
         <Field label="Contrasena de acceso">
           <TextInput type="password" name="password" placeholder="••••••••" autoFocus required style={{ width: "100%" }} />
         </Field>
