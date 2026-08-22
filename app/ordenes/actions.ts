@@ -23,6 +23,12 @@ export async function setOrderStatus(orderId: string, status: string) {
   revalidatePath("/");
 }
 
+export async function setOrderObservations(orderId: string, formData: FormData) {
+  const observations = String(formData.get("observations") || "").trim();
+  await prisma.order.update({ where: { id: orderId }, data: { observations } });
+  revalidatePath("/ordenes");
+}
+
 export async function startOrderTimer(orderId: string) {
   const existing = await prisma.timeEntry.findFirst({ where: { end: null } });
   if (existing) return;

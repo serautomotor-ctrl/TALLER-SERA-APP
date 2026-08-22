@@ -7,6 +7,7 @@ import { NewOrderButton } from "@/components/ordenes/NewOrderButton";
 import { OrderStatusSelect } from "@/components/ordenes/OrderStatusSelect";
 import { OrderTimerControls } from "@/components/ordenes/OrderTimerControls";
 import { OrderArticlesPanel } from "@/components/ordenes/OrderArticlesPanel";
+import { OrderObservations } from "@/components/ordenes/OrderObservations";
 import { QrModalParam } from "@/components/ordenes/QrModalParam";
 import { fmtDate } from "@/lib/format";
 import { prisma } from "@/lib/prisma";
@@ -87,6 +88,7 @@ export default async function OrdenesPage({ searchParams }: { searchParams: Prom
                 items={o.items.map((it) => ({ id: it.id, name: it.name, price: Number(it.price), qty: it.qty }))}
                 articles={articles.map((a) => ({ id: a.id, name: a.name, price: Number(a.price) }))}
               />
+              <OrderObservations orderId={o.id} observations={o.observations} />
             </Card>
           );
         })}

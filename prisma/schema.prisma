@@ -82,14 +82,15 @@ model Warranty {
 }
 
 model Order {
-  id          String      @id @default(cuid())
-  plate       String
-  description String      @default("")
-  status      OrderStatus @default(abierta)
-  createdAt   DateTime    @default(now())
-  items       OrderItem[]
-  timeEntries TimeEntry[]
-  reception   Reception?
+  id           String      @id @default(cuid())
+  plate        String
+  description  String      @default("")
+  observations String      @default("")
+  status       OrderStatus @default(abierta)
+  createdAt    DateTime    @default(now())
+  items        OrderItem[]
+  timeEntries  TimeEntry[]
+  reception    Reception?
 }
 
 enum BudgetStatus {
