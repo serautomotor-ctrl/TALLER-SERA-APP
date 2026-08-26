@@ -17,10 +17,10 @@ import { togglePause, finishEntry } from "@/app/horario/actions";
 export default async function OrdenesPage({ searchParams }: { searchParams: Promise<{ qr?: string }> }) {
   const { qr } = await searchParams;
 
-  const [orders, articles, activeEntry] = await Promise.all([
+  const [orders, articles, activeEntries] = await Promise.all([
     prisma.order.findMany({ orderBy: { createdAt: "desc" }, include: { items: true } }),
     prisma.article.findMany({ orderBy: { name: "asc" } }),
-    prisma.timeEntry.findFirst({ where: { end: null } }),
+    prisma.timeEntry.findMany({ where: { end: null } }),
   ]);
 
   const qrOrder = qr ? orders.find((o) => o.id === qr) ?? null : null;
@@ -50,8 +50,8 @@ export default async function OrdenesPage({ searchParams }: { searchParams: Prom
           </Card>
         )}
         {orders.map((o) => {
-          const isActive = !!activeEntry && activeEntry.orderId === o.id;
-          const otherActive = !!activeEntry && activeEntry.orderId !== o.id;
+          const activeEntry = activeEntries.find((e) => e.orderId === o.id) ?? null;
+          const isActive = !!activeEntry;
           return (
             <Card key={o.id} style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%", flexWrap: "wrap", gap: 10 }}>
@@ -69,11 +69,10 @@ export default async function OrdenesPage({ searchParams }: { searchParams: Prom
                 <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
                   <OrderTimerControls
                     isActive={isActive}
-                    activeEntry={isActive && activeEntry ? activeEntry : null}
-                    otherActive={otherActive}
+                    activeEntry={activeEntry}
                     startAction={startOrderTimer.bind(null, o.id)}
-                    togglePauseAction={isActive && activeEntry ? togglePause.bind(null, activeEntry.id) : undefined}
-                    finishAction={isActive && activeEntry ? finishEntry.bind(null, activeEntry.id) : undefined}
+                    togglePauseAction={activeEntry ? togglePause.bind(null, activeEntry.id) : undefined}
+                    finishAction={activeEntry ? finishEntry.bind(null, activeEntry.id) : undefined}
                   />
                   <OrderStatusSelect orderId={o.id} status={o.status} />
                   <Link href={`/ordenes?qr=${o.id}`}>

@@ -30,7 +30,7 @@ export async function setOrderObservations(orderId: string, formData: FormData) 
 }
 
 export async function startOrderTimer(orderId: string) {
-  const existing = await prisma.timeEntry.findFirst({ where: { end: null } });
+  const existing = await prisma.timeEntry.findFirst({ where: { end: null, orderId } });
   if (existing) return;
 
   const order = await prisma.order.findUnique({ where: { id: orderId } });

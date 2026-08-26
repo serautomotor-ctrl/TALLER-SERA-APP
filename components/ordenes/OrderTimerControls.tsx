@@ -10,14 +10,12 @@ type ActiveEntry = { start: Date; pausedMs: number; paused: boolean; pauseStart:
 export function OrderTimerControls({
   isActive,
   activeEntry,
-  otherActive,
   startAction,
   togglePauseAction,
   finishAction,
 }: {
   isActive: boolean;
   activeEntry: ActiveEntry | null;
-  otherActive: boolean;
   startAction: () => void;
   togglePauseAction?: () => void;
   finishAction?: () => void;
@@ -53,7 +51,7 @@ export function OrderTimerControls({
   }
 
   return (
-    <Button variant="secondary" type="button" disabled={otherActive} onClick={() => startAction()}>
+    <Button variant="secondary" type="button" onClick={() => startAction()}>
       <IconPlay size={15} /> Iniciar reparacion
     </Button>
   );

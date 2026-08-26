@@ -13,12 +13,12 @@ import { prisma } from "@/lib/prisma";
 export const dynamic = "force-dynamic";
 
 export default async function InicioPage() {
-  const [openOrders, vehicleCount, pendingAgg, todayEntries, activeEntry, recentOrders] = await Promise.all([
+  const [openOrders, vehicleCount, pendingAgg, todayEntries, activeEntries, recentOrders] = await Promise.all([
     prisma.order.count({ where: { status: { not: "cerrada" } } }),
     prisma.vehicle.count(),
     prisma.vehicle.aggregate({ _sum: { pendingPayments: true } }),
     prisma.timeEntry.findMany({ where: { start: { gte: startOfToday() } } }),
-    prisma.timeEntry.findFirst({ where: { end: null }, orderBy: { start: "desc" } }),
+    prisma.timeEntry.findMany({ where: { end: null }, orderBy: { start: "desc" } }),
     prisma.order.findMany({ orderBy: { createdAt: "desc" }, take: 4 }),
   ]);
 
@@ -38,25 +38,30 @@ export default async function InicioPage() {
       <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1.1fr) minmax(0, 1fr)", gap: 14 }}>
         <Card>
           <SectionTitle>Estado del control horario</SectionTitle>
-          {activeEntry ? (
-            <div style={{ display: "flex", alignItems: "center", gap: 14, marginTop: 10 }}>
-              <div
-                style={{
-                  width: 12,
-                  height: 12,
-                  borderRadius: "50%",
-                  background: activeEntry.paused ? "var(--color-warning)" : "var(--color-success)",
-                  boxShadow: activeEntry.paused ? "none" : "0 0 0 4px var(--color-success-soft)",
-                }}
-              />
-              <div>
-                <p style={{ margin: 0, fontFamily: "var(--font-body)", fontWeight: 600, color: "var(--color-text-primary)", fontSize: 14 }}>
-                  {activeEntry.task || "Tarea sin nombre"} {activeEntry.plate ? `· ${activeEntry.plate}` : ""}
-                </p>
-                <p style={{ margin: "2px 0 0", fontFamily: "var(--font-body)", fontSize: 12.5, color: "var(--color-text-muted)" }}>
-                  {activeEntry.paused ? "En pausa" : "En marcha"} desde las {fmtTime(activeEntry.start)}
-                </p>
-              </div>
+          {activeEntries.length > 0 ? (
+            <div style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 10 }}>
+              {activeEntries.map((entry) => (
+                <div key={entry.id} style={{ display: "flex", alignItems: "center", gap: 14 }}>
+                  <div
+                    style={{
+                      width: 12,
+                      height: 12,
+                      borderRadius: "50%",
+                      flexShrink: 0,
+                      background: entry.paused ? "var(--color-warning)" : "var(--color-success)",
+                      boxShadow: entry.paused ? "none" : "0 0 0 4px var(--color-success-soft)",
+                    }}
+                  />
+                  <div>
+                    <p style={{ margin: 0, fontFamily: "var(--font-body)", fontWeight: 600, color: "var(--color-text-primary)", fontSize: 14 }}>
+                      {entry.task || "Tarea sin nombre"} {entry.plate ? `· ${entry.plate}` : ""}
+                    </p>
+                    <p style={{ margin: "2px 0 0", fontFamily: "var(--font-body)", fontSize: 12.5, color: "var(--color-text-muted)" }}>
+                      {entry.paused ? "En pausa" : "En marcha"} desde las {fmtTime(entry.start)}
+                    </p>
+                  </div>
+                </div>
+              ))}
             </div>
           ) : (
             <p style={{ fontFamily: "var(--font-body)", color: "var(--color-text-muted)", fontSize: 13.5, marginTop: 10 }}>
