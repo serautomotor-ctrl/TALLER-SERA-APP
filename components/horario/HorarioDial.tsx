@@ -27,102 +27,101 @@ function useTicker(active: boolean) {
   return now;
 }
 
-function DialButton({ running, elapsedMs, onToggle }: { running: boolean; elapsedMs: number; onToggle: () => void }) {
-  const R = 88;
-  const CX = 100;
-  const CY = 100;
-  const circumference = 2 * Math.PI * R;
-  const pct = running ? (elapsedMs % 3600000) / 3600000 : 0;
-  const dash = circumference * pct;
+function EntryRow({
+  entry,
+  onTogglePause,
+  onFinish,
+}: {
+  entry: ActiveEntry;
+  onTogglePause: () => void;
+  onFinish: () => void;
+}) {
+  const running = !entry.paused;
+  const now = useTicker(running);
+  const elapsed =
+    now - entry.start.getTime() - entry.pausedMs - (entry.paused && entry.pauseStart ? now - entry.pauseStart.getTime() : 0);
+
   return (
-    <div style={{ position: "relative", width: 200, height: 200 }}>
-      <svg width="200" height="200" style={{ position: "absolute", inset: 0, transform: "rotate(-90deg)" }}>
-        <circle cx={CX} cy={CY} r={R} fill="none" stroke="var(--color-surface-3)" strokeWidth="10" />
-        <circle
-          cx={CX}
-          cy={CY}
-          r={R}
-          fill="none"
-          stroke={running ? "var(--color-accent)" : "var(--color-text-faint)"}
-          strokeWidth="10"
-          strokeLinecap="round"
-          strokeDasharray={`${dash} ${circumference}`}
-          style={{ transition: "stroke-dasharray 0.3s linear" }}
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        gap: 10,
+        flexWrap: "wrap",
+        background: "var(--color-surface-2)",
+        borderRadius: 10,
+        padding: "10px 12px",
+      }}
+    >
+      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        <div
+          style={{
+            width: 10,
+            height: 10,
+            borderRadius: "50%",
+            flexShrink: 0,
+            background: entry.paused ? "var(--color-warning)" : "var(--color-success)",
+            boxShadow: entry.paused ? "none" : "0 0 0 3px var(--color-success-soft)",
+          }}
         />
-      </svg>
-      <button
-        onClick={onToggle}
-        aria-label={running ? "Pausar" : "Iniciar"}
-        style={{
-          position: "absolute",
-          inset: 14,
-          borderRadius: "50%",
-          border: "none",
-          cursor: "pointer",
-          background: running ? "var(--color-warning)" : "var(--color-accent)",
-          color: "#1A0E04",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
-          gap: 4,
-          boxShadow: "0 6px 0 rgba(0,0,0,0.35)",
-        }}
-      >
-        {running ? <IconPause size={34} /> : <IconPlay size={34} />}
-        <span style={{ fontFamily: "var(--font-display)", fontWeight: 700, fontSize: 15, textTransform: "uppercase", letterSpacing: 1 }}>
-          {running ? "Pausar" : "Iniciar"}
-        </span>
-      </button>
+        <div>
+          <p style={{ margin: 0, fontFamily: "var(--font-body)", fontWeight: 600, fontSize: 13.5, color: "var(--color-text-primary)" }}>
+            {entry.task || "Tarea sin nombre"} {entry.plate ? `· ${entry.plate}` : ""}
+          </p>
+          <p style={{ margin: "2px 0 0", fontFamily: "var(--font-mono)", fontSize: 15, fontWeight: 600, color: entry.paused ? "var(--color-warning)" : "var(--color-success)" }}>
+            {fmtDur(Math.max(0, elapsed))}
+          </p>
+        </div>
+      </div>
+      <div style={{ display: "flex", gap: 8 }}>
+        <Button variant={entry.paused ? "primary" : "secondary"} type="button" onClick={onTogglePause}>
+          {entry.paused ? <IconPlay size={15} /> : <IconPause size={15} />} {entry.paused ? "Reanudar" : "Pausar"}
+        </Button>
+        <Button variant="danger" type="button" onClick={onFinish}>
+          <IconStop size={14} /> Finalizar
+        </Button>
+      </div>
     </div>
   );
 }
 
 export function HorarioDial({
-  activeEntry,
+  activeEntries,
   startEntryAction,
   togglePauseAction,
   finishEntryAction,
 }: {
-  activeEntry: ActiveEntry | null;
+  activeEntries: ActiveEntry[];
   startEntryAction: (formData: FormData) => void;
-  togglePauseAction?: () => void;
-  finishEntryAction?: () => void;
+  togglePauseAction: (id: string) => void;
+  finishEntryAction: (id: string) => void;
 }) {
-  const running = !!activeEntry && !activeEntry.paused;
-  const now = useTicker(running);
-
-  const elapsed = activeEntry
-    ? now -
-      activeEntry.start.getTime() -
-      activeEntry.pausedMs -
-      (activeEntry.paused && activeEntry.pauseStart ? now - activeEntry.pauseStart.getTime() : 0)
-    : 0;
-
   return (
-    <Card style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 16, minWidth: 260 }}>
-      <DialButton running={running} elapsedMs={elapsed} onToggle={() => (activeEntry ? togglePauseAction?.() : undefined)} />
-      <p style={{ fontFamily: "var(--font-mono)", fontSize: 26, fontWeight: 600, color: "var(--color-text-primary)", margin: 0 }}>
-        {fmtDur(Math.max(0, elapsed))}
-      </p>
-      {activeEntry ? (
-        <>
-          <p style={{ fontFamily: "var(--font-body)", fontSize: 13, color: "var(--color-text-muted)", textAlign: "center", margin: 0 }}>
-            {activeEntry.task} {activeEntry.plate ? `· ${activeEntry.plate}` : ""}
-          </p>
-          <Button variant="danger" type="button" onClick={() => finishEntryAction?.()} style={{ width: "100%" }}>
-            <IconStop /> Finalizar tarea
-          </Button>
-        </>
+    <Card style={{ display: "flex", flexDirection: "column", gap: 14, minWidth: 260 }}>
+      {activeEntries.length > 0 ? (
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          {activeEntries.map((entry) => (
+            <EntryRow
+              key={entry.id}
+              entry={entry}
+              onTogglePause={() => togglePauseAction(entry.id)}
+              onFinish={() => finishEntryAction(entry.id)}
+            />
+          ))}
+        </div>
       ) : (
-        <form action={startEntryAction} style={{ width: "100%", display: "flex", flexDirection: "column", gap: 10 }}>
-          <TextInput name="task" placeholder="Descripcion de la tarea" />
-          <TextInput name="plate" placeholder="Matricula (opcional)" style={{ textTransform: "uppercase" }} />
-          <Button variant="primary" type="submit">
-            <IconPlay size={16} /> Iniciar
-          </Button>
-        </form>
+        <p style={{ fontFamily: "var(--font-body)", color: "var(--color-text-muted)", fontSize: 13.5, margin: 0 }}>
+          No hay ninguna tarea en marcha ahora mismo.
+        </p>
       )}
+      <form action={startEntryAction} style={{ width: "100%", display: "flex", flexDirection: "column", gap: 10, paddingTop: activeEntries.length > 0 ? 4 : 0, borderTop: activeEntries.length > 0 ? "1px solid var(--color-border)" : "none" }}>
+        <TextInput name="task" placeholder="Descripcion de la tarea" />
+        <TextInput name="plate" placeholder="Matricula (opcional)" style={{ textTransform: "uppercase" }} />
+        <Button variant="primary" type="submit">
+          <IconPlay size={16} /> Iniciar nueva tarea
+        </Button>
+      </form>
     </Card>
   );
 }

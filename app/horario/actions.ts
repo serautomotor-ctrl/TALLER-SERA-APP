@@ -4,9 +4,6 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 
 export async function startEntry(formData: FormData) {
-  const existing = await prisma.timeEntry.findFirst({ where: { end: null } });
-  if (existing) return;
-
   const task = String(formData.get("task") || "").trim() || "Tarea general";
   const plate = String(formData.get("plate") || "").trim().toUpperCase();
 

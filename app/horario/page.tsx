@@ -11,8 +11,8 @@ import { finishEntry, startEntry, togglePause } from "./actions";
 export const dynamic = "force-dynamic";
 
 export default async function HorarioPage() {
-  const [activeEntry, todayEntries] = await Promise.all([
-    prisma.timeEntry.findFirst({ where: { end: null }, orderBy: { start: "desc" } }),
+  const [activeEntries, todayEntries] = await Promise.all([
+    prisma.timeEntry.findMany({ where: { end: null }, orderBy: { start: "desc" } }),
     prisma.timeEntry.findMany({ where: { start: { gte: startOfToday() } }, orderBy: { start: "desc" } }),
   ]);
 
@@ -21,10 +21,10 @@ export default async function HorarioPage() {
       <Header title="Control horario" subtitle="Inicia, pausa y cierra el tiempo dedicado a cada tarea" />
       <div className="dial-detail-grid">
         <HorarioDial
-          activeEntry={activeEntry}
+          activeEntries={activeEntries}
           startEntryAction={startEntry}
-          togglePauseAction={activeEntry ? togglePause.bind(null, activeEntry.id) : undefined}
-          finishEntryAction={activeEntry ? finishEntry.bind(null, activeEntry.id) : undefined}
+          togglePauseAction={togglePause}
+          finishEntryAction={finishEntry}
         />
 
         <Card>
