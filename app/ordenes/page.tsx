@@ -1,8 +1,9 @@
 import Link from "next/link";
 import { Card } from "@/components/ui/Card";
 import { Header } from "@/components/ui/Header";
-import { IconWrench, IconQr, IconBarcode } from "@/components/ui/icons";
+import { IconWrench, IconQr, IconBarcode, IconSearch } from "@/components/ui/icons";
 import { Button } from "@/components/ui/Button";
+import { TextInput } from "@/components/ui/inputs";
 import { NewOrderButton } from "@/components/ordenes/NewOrderButton";
 import { OrderStatusSelect } from "@/components/ordenes/OrderStatusSelect";
 import { OrderTimerControls } from "@/components/ordenes/OrderTimerControls";
@@ -14,11 +15,15 @@ import { prisma } from "@/lib/prisma";
 import { startOrderTimer } from "./actions";
 import { togglePause, finishEntry } from "@/app/horario/actions";
 
-export default async function OrdenesPage({ searchParams }: { searchParams: Promise<{ qr?: string }> }) {
-  const { qr } = await searchParams;
+export default async function OrdenesPage({ searchParams }: { searchParams: Promise<{ qr?: string; q?: string }> }) {
+  const { qr, q = "" } = await searchParams;
 
   const [orders, articles, activeEntries] = await Promise.all([
-    prisma.order.findMany({ orderBy: { createdAt: "desc" }, include: { items: true } }),
+    prisma.order.findMany({
+      where: q ? { plate: { contains: q, mode: "insensitive" } } : undefined,
+      orderBy: { createdAt: "desc" },
+      include: { items: true },
+    }),
     prisma.article.findMany({ orderBy: { name: "asc" } }),
     prisma.timeEntry.findMany({ where: { end: null } }),
   ]);
@@ -41,11 +46,15 @@ export default async function OrdenesPage({ searchParams }: { searchParams: Prom
           </div>
         }
       />
+      <form action="/ordenes" method="get" style={{ position: "relative", marginBottom: 12, maxWidth: 340 }}>
+        <IconSearch style={{ position: "absolute", left: 10, top: 9, color: "var(--color-text-faint)" }} />
+        <TextInput name="q" defaultValue={q} placeholder="Buscar por matricula" style={{ paddingLeft: 32, width: "100%", textTransform: "uppercase" }} />
+      </form>
       <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
         {orders.length === 0 && (
           <Card>
             <p style={{ fontFamily: "var(--font-body)", color: "var(--color-text-muted)", fontSize: 13.5 }}>
-              Todavia no hay ordenes de reparacion. Crea la primera para generar su QR.
+              {q ? `Sin ordenes que coincidan con "${q}".` : "Todavia no hay ordenes de reparacion. Crea la primera para generar su QR."}
             </p>
           </Card>
         )}
