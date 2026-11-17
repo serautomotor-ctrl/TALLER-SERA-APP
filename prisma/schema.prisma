@@ -18,25 +18,25 @@ enum OrderStatus {
 }
 
 model Settings {
-  id           String   @id @default("singleton")
-  workshopName String   @default("Automecanica Sera")
-  taxId        String   @default("")
-  address      String   @default("")
-  postalCode   String   @default("")
-  city         String   @default("")
-  province     String   @default("")
-  phone        String   @default("")
-  email        String   @default("")
-  logoUrl      String   @default("")
-  hourlyRate   Decimal  @default(0) @db.Decimal(10, 2)
-  checklist    String[] @default(["Neumaticos", "Pastillas de freno", "Discos de freno", "Amortiguadores", "Niveles de liquidos", "Bateria", "Luces", "Escobillas", "Correa de distribucion", "Filtro de aire", "Aceite motor", "Suspension y direccion"])
-  aiApiKey     String   @default("")
-  nextInvoiceNumberOverride String @default("")
-  whatsapp      String @default("")
-  businessHours String @default("")
-  aboutText     String @default("")
-  passwordHash String
-  passwordSalt String
+  id                        String   @id @default("singleton")
+  workshopName              String   @default("Automecanica Sera")
+  taxId                     String   @default("")
+  address                   String   @default("")
+  postalCode                String   @default("")
+  city                      String   @default("")
+  province                  String   @default("")
+  phone                     String   @default("")
+  email                     String   @default("")
+  logoUrl                   String   @default("")
+  hourlyRate                Decimal  @default(0) @db.Decimal(10, 2)
+  checklist                 String[] @default(["Neumaticos", "Pastillas de freno", "Discos de freno", "Amortiguadores", "Niveles de liquidos", "Bateria", "Luces", "Escobillas", "Correa de distribucion", "Filtro de aire", "Aceite motor", "Suspension y direccion"])
+  aiApiKey                  String   @default("")
+  nextInvoiceNumberOverride String   @default("")
+  whatsapp                  String   @default("")
+  businessHours             String   @default("")
+  aboutText                 String   @default("")
+  passwordHash              String
+  passwordSalt              String
 }
 
 model Customer {
@@ -101,16 +101,16 @@ enum BudgetStatus {
 }
 
 model Reception {
-  id              String          @id @default(cuid())
-  order           Order           @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  orderId         String          @unique
-  createdAt       DateTime        @default(now())
-  mileage         Int?
-  checkpoints     Json            @default("{}")
-  budgetStatus    BudgetStatus    @default(sin_enviar)
-  sentAt          DateTime?
-  requestedItems  RequestedItem[]
-  findings        Finding[]
+  id             String          @id @default(cuid())
+  order          Order           @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  orderId        String          @unique
+  createdAt      DateTime        @default(now())
+  mileage        Int?
+  checkpoints    Json            @default("{}")
+  budgetStatus   BudgetStatus    @default(sin_enviar)
+  sentAt         DateTime?
+  requestedItems RequestedItem[]
+  findings       Finding[]
 }
 
 model RequestedItem {
@@ -130,11 +130,38 @@ model Finding {
 }
 
 model Article {
-  id         String      @id @default(cuid())
+  id         String          @id @default(cuid())
   name       String
-  price      Decimal     @db.Decimal(10, 2)
-  costPrice  Decimal     @default(0) @db.Decimal(10, 2)
+  price      Decimal         @db.Decimal(10, 2)
+  costPrice  Decimal         @default(0) @db.Decimal(10, 2)
+  stock      Int             @default(0)
+  minStock   Int             @default(0)
+  supplier   String          @default("")
   orderItems OrderItem[]
+  movements  StockMovement[]
+}
+
+enum StockMovementKind {
+  entrada
+  salida_orden
+  devolucion_orden
+  ajuste
+}
+
+model StockMovement {
+  id         String            @id @default(cuid())
+  article    Article           @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  articleId  String
+  kind       StockMovementKind
+  qty        Int
+  stockAfter Int
+  unitCost   Decimal?          @db.Decimal(10, 2)
+  note       String            @default("")
+  orderId    String?
+  plate      String            @default("")
+  createdAt  DateTime          @default(now())
+
+  @@index([articleId, createdAt])
 }
 
 model OrderItem {
@@ -163,21 +190,21 @@ enum PaymentMethod {
 }
 
 model Invoice {
-  id            String        @id @default(cuid())
-  number        String        @unique
+  id            String         @id @default(cuid())
+  number        String         @unique
   plate         String
-  clientName    String        @default("")
-  clientNif     String        @default("")
-  clientAddress String        @default("")
-  subtotal      Decimal       @db.Decimal(10, 2)
-  vatTotal      Decimal       @db.Decimal(10, 2)
-  total         Decimal       @db.Decimal(10, 2)
-  createdAt     DateTime      @default(now())
-  prevHash      String        @default("")
+  clientName    String         @default("")
+  clientNif     String         @default("")
+  clientAddress String         @default("")
+  subtotal      Decimal        @db.Decimal(10, 2)
+  vatTotal      Decimal        @db.Decimal(10, 2)
+  total         Decimal        @db.Decimal(10, 2)
+  createdAt     DateTime       @default(now())
+  prevHash      String         @default("")
   hash          String
-  paymentStatus PaymentStatus @default(pendiente)
+  paymentStatus PaymentStatus  @default(pendiente)
   paymentMethod PaymentMethod?
-  paidAmount    Decimal       @default(0) @db.Decimal(10, 2)
+  paidAmount    Decimal        @default(0) @db.Decimal(10, 2)
   paidAt        DateTime?
   items         InvoiceItem[]
 }
@@ -318,13 +345,13 @@ model Service {
 }
 
 model Diagnosis {
-  id          String   @id @default(cuid())
-  plate       String   @default("")
-  symptoms    String
-  aiResponse  String
-  resolved    Boolean  @default(false)
-  resolution  String   @default("")
-  createdAt   DateTime @default(now())
+  id         String   @id @default(cuid())
+  plate      String   @default("")
+  symptoms   String
+  aiResponse String
+  resolved   Boolean  @default(false)
+  resolution String   @default("")
+  createdAt  DateTime @default(now())
 }
 
 model TimeEntry {

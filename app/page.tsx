@@ -9,18 +9,24 @@ import { IconClock } from "@/components/ui/icons";
 import { fmtDate, fmtDur, fmtEUR, fmtTime } from "@/lib/format";
 import { finishedEntryDurationMs, startOfToday } from "@/lib/time";
 import { prisma } from "@/lib/prisma";
+import { stockLevel } from "@/lib/stock";
 
 export const dynamic = "force-dynamic";
 
 export default async function InicioPage() {
-  const [openOrders, vehicleCount, pendingAgg, todayEntries, activeEntries, recentOrders] = await Promise.all([
+  const [openOrders, vehicleCount, pendingAgg, todayEntries, activeEntries, recentOrders, stockRows] = await Promise.all([
     prisma.order.count({ where: { status: { not: "cerrada" } } }),
     prisma.vehicle.count(),
     prisma.vehicle.aggregate({ _sum: { pendingPayments: true } }),
     prisma.timeEntry.findMany({ where: { start: { gte: startOfToday() } } }),
     prisma.timeEntry.findMany({ where: { end: null }, orderBy: { start: "desc" } }),
     prisma.order.findMany({ orderBy: { createdAt: "desc" }, take: 4 }),
+    prisma.article.findMany({ select: { stock: true, minStock: true, _count: { select: { movements: true } } } }),
   ]);
+  const toOrder = stockRows.filter((a) => {
+    const level = stockLevel(a.stock, a.minStock, a._count.movements > 0);
+    return level === "bajo" || level === "agotado";
+  }).length;
 
   const todayMs = todayEntries.reduce((sum, e) => sum + finishedEntryDurationMs(e), 0);
   const pendingTotal = Number(pendingAgg._sum.pendingPayments) || 0;
@@ -28,6 +34,26 @@ export default async function InicioPage() {
   return (
     <div>
       <Header title="Inicio" subtitle="Resumen del dia en el taller" />
+      {toOrder > 0 && (
+        <Link
+          href="/articulos?filtro=bajo"
+          style={{
+            display: "block",
+            marginBottom: 14,
+            padding: "10px 14px",
+            borderRadius: 10,
+            background: "var(--color-warning-soft)",
+            border: "1px solid var(--color-warning)",
+            color: "var(--color-warning)",
+            fontFamily: "var(--font-body)",
+            fontSize: 13.5,
+            fontWeight: 600,
+            textDecoration: "none",
+          }}
+        >
+          {toOrder === 1 ? "Hay 1 articulo con stock bajo o agotado" : `Hay ${toOrder} articulos con stock bajo o agotado`} · Ver lista para pedir →
+        </Link>
+      )}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 12, marginBottom: 22 }}>
         <MetricCard label="Ordenes abiertas" value={openOrders} tone="accent" href="/ordenes" />
         <MetricCard label="Vehiculos registrados" value={vehicleCount} tone="steel" href="/fichas" />

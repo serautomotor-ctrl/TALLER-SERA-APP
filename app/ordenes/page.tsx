@@ -94,7 +94,7 @@ export default async function OrdenesPage({ searchParams }: { searchParams: Prom
               <OrderArticlesPanel
                 orderId={o.id}
                 items={o.items.map((it) => ({ id: it.id, name: it.name, price: Number(it.price), qty: it.qty }))}
-                articles={articles.map((a) => ({ id: a.id, name: a.name, price: Number(a.price) }))}
+                articles={articles.map((a) => ({ id: a.id, name: a.name, price: Number(a.price), stock: a.stock }))}
               />
               <OrderObservations orderId={o.id} observations={o.observations} />
             </Card>

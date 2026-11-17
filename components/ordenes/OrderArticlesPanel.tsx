@@ -10,7 +10,7 @@ import { fmtEUR } from "@/lib/format";
 import { addCatalogItem, changeItemQty, removeOrderItem } from "@/app/ordenes/actions";
 import { QrScanner } from "./QrScanner";
 
-type Article = { id: string; name: string; price: number };
+type Article = { id: string; name: string; price: number; stock: number };
 type OrderItem = { id: string; name: string; price: number; qty: number };
 
 export function OrderArticlesPanel({ orderId, items, articles }: { orderId: string; items: OrderItem[]; articles: Article[] }) {
@@ -131,7 +131,19 @@ function AddArticleForm({ orderId, articles, onAdded }: { orderId: string; artic
                 style={{ display: "flex", justifyContent: "space-between", alignItems: "center", background: "var(--color-surface-2)", borderRadius: 8, padding: "8px 10px" }}
               >
                 <input type="hidden" name="articleId" value={a.id} />
-                <span style={{ fontFamily: "var(--font-body)", fontSize: 13, color: "var(--color-text-primary)" }}>{a.name}</span>
+                <span style={{ fontFamily: "var(--font-body)", fontSize: 13, color: "var(--color-text-primary)" }}>
+                  {a.name}
+                  <span
+                    style={{
+                      marginLeft: 8,
+                      fontFamily: "var(--font-mono)",
+                      fontSize: 11.5,
+                      color: a.stock > 0 ? "var(--color-text-faint)" : "var(--color-danger)",
+                    }}
+                  >
+                    {a.stock > 0 ? `${a.stock} uds.` : "sin stock"}
+                  </span>
+                </span>
                 <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                   <span style={{ fontFamily: "var(--font-mono)", fontSize: 12.5, color: "var(--color-accent)" }}>{fmtEUR(a.price)}</span>
                   <button type="submit" style={{ background: "none", border: "none", cursor: "pointer", color: "var(--color-text-muted)" }}>
