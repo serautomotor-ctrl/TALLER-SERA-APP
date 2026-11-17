@@ -31,11 +31,11 @@ export function AppointmentRow({ appointment }: { appointment: Appointment }) {
   const [, startTransition] = useTransition();
 
   return (
-    <div style={{ display: "flex", alignItems: "flex-start", gap: 12, background: "var(--color-surface-2)", borderRadius: 8, padding: "10px 12px" }}>
+    <div style={{ display: "flex", alignItems: "flex-start", flexWrap: "wrap", gap: 12, background: "var(--color-surface-2)", borderRadius: 8, padding: "10px 12px" }}>
       <span style={{ fontFamily: "var(--font-mono)", fontSize: 13, color: "var(--color-text-primary)", fontWeight: 700, minWidth: 46 }}>
         {fmtTime(appointment.date)}
       </span>
-      <div style={{ flex: 1 }}>
+      <div style={{ flex: "1 1 160px", minWidth: 0 }}>
         <p style={{ margin: 0, fontFamily: "var(--font-body)", fontWeight: 600, fontSize: 13.5, color: "var(--color-text-primary)" }}>
           {appointment.clientName || "Sin nombre"} {appointment.plate ? `· ${appointment.plate}` : ""} {appointment.phone ? `· ${appointment.phone}` : ""}
         </p>

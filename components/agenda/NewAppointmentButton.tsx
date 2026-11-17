@@ -7,14 +7,48 @@ import { Modal } from "@/components/ui/Modal";
 import { IconPlus } from "@/components/ui/icons";
 import { createAppointment } from "@/app/agenda/actions";
 
-export function NewAppointmentButton({ dateKey }: { dateKey: string }) {
+export function NewAppointmentButton({
+  dateKey,
+  defaultTime = "09:00",
+  compact = false,
+}: {
+  dateKey: string;
+  defaultTime?: string;
+  compact?: boolean;
+}) {
   const [open, setOpen] = useState(false);
 
   return (
     <>
-      <Button variant="primary" type="button" onClick={() => setOpen(true)}>
-        <IconPlus /> Nueva cita
-      </Button>
+      {compact ? (
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          title={`Nueva cita a las ${defaultTime}`}
+          style={{
+            width: "100%",
+            height: "100%",
+            minHeight: 30,
+            background: "none",
+            border: "1px dashed transparent",
+            borderRadius: 6,
+            cursor: "pointer",
+            color: "var(--color-text-faint)",
+            fontFamily: "var(--font-body)",
+            fontSize: 12,
+            textAlign: "left",
+            padding: "0 8px",
+          }}
+          onMouseEnter={(e) => (e.currentTarget.style.borderColor = "var(--color-border)")}
+          onMouseLeave={(e) => (e.currentTarget.style.borderColor = "transparent")}
+        >
+          + Libre
+        </button>
+      ) : (
+        <Button variant="primary" type="button" onClick={() => setOpen(true)}>
+          <IconPlus /> Nueva cita
+        </Button>
+      )}
       {open && (
         <Modal title="Nueva cita" onClose={() => setOpen(false)}>
           <form
@@ -29,7 +63,7 @@ export function NewAppointmentButton({ dateKey }: { dateKey: string }) {
                 <TextInput type="date" name="date" defaultValue={dateKey} required />
               </Field>
               <Field label="Hora">
-                <TextInput type="time" name="time" defaultValue="09:00" required />
+                <TextInput type="time" name="time" defaultValue={defaultTime} required />
               </Field>
             </div>
             <Field label="Matricula (opcional)">
