@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Header } from "@/components/ui/Header";
@@ -19,6 +20,26 @@ export default async function AjustesPage() {
     <div>
       <Header title="Ajustes" subtitle="Datos del taller, tarifa por hora y seguridad de acceso" />
       <div style={{ display: "flex", flexDirection: "column", gap: 14, maxWidth: 560 }}>
+        <Card>
+          <SectionTitle>Usuarios, permisos y registro</SectionTitle>
+          <p style={{ margin: "4px 0 12px", fontFamily: "var(--font-body)", fontSize: 12.5, color: "var(--color-text-muted)" }}>
+            Da un usuario a cada persona del taller, elige que puede ver y consulta quien ha hecho cada cosa.
+          </p>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            <Link href="/ajustes/usuarios">
+              <Button type="button" variant="primary">
+                Usuarios y permisos
+              </Button>
+            </Link>
+            <Link href="/ajustes/registro">
+              <Button type="button">Registro de acciones</Button>
+            </Link>
+            <Link href="/operarios">
+              <Button type="button">Operarios</Button>
+            </Link>
+          </div>
+        </Card>
+
         <Card>
           <SectionTitle>Datos del taller</SectionTitle>
           <div style={{ marginTop: 12, marginBottom: 4 }}>

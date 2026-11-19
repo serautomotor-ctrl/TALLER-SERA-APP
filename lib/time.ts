@@ -39,3 +39,7 @@ export function addDaysToKey(dateKey: string, days: number) {
   d.setDate(d.getDate() + days);
   return toDateKey(d);
 }
+
+export function nowMs() {
+  return Date.now();
+}

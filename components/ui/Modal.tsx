@@ -3,7 +3,7 @@
 import type { ReactNode } from "react";
 import { SectionTitle } from "./SectionTitle";
 
-export function Modal({ title, onClose, children }: { title: string; onClose: () => void; children: ReactNode }) {
+export function Modal({ title, onClose, children, maxWidth = 420 }: { title: string; onClose: () => void; children: ReactNode; maxWidth?: number }) {
   return (
     <div
       style={{
@@ -26,7 +26,7 @@ export function Modal({ title, onClose, children }: { title: string; onClose: ()
           borderRadius: 14,
           padding: 20,
           width: "100%",
-          maxWidth: 420,
+          maxWidth,
           maxHeight: "88vh",
           overflowY: "auto",
         }}

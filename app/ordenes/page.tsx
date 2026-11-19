@@ -22,7 +22,7 @@ export default async function OrdenesPage({ searchParams }: { searchParams: Prom
     prisma.order.findMany({
       where: q ? { plate: { contains: q, mode: "insensitive" } } : undefined,
       orderBy: { createdAt: "desc" },
-      include: { items: true },
+      include: { items: true, mechanic: true, purchases: { select: { id: true, kind: true, number: true, supplierName: true, total: true } } },
     }),
     prisma.article.findMany({ orderBy: { name: "asc" } }),
     prisma.timeEntry.findMany({ where: { end: null } }),
@@ -72,7 +72,19 @@ export default async function OrdenesPage({ searchParams }: { searchParams: Prom
                     <p style={{ margin: 0, fontFamily: "var(--font-mono)", fontWeight: 700, fontSize: 15, color: "var(--color-text-primary)" }}>{o.plate}</p>
                     <p style={{ margin: "2px 0 0", fontFamily: "var(--font-body)", fontSize: 12.5, color: "var(--color-text-muted)" }}>
                       {o.description || "Sin descripcion"} · {fmtDate(o.createdAt)}
+                      {o.mechanic ? ` · ${o.mechanic.name}` : ""}
                     </p>
+                    {o.purchases.length > 0 && (
+                      <p style={{ margin: "2px 0 0", fontFamily: "var(--font-body)", fontSize: 12, color: "var(--color-text-faint)" }}>
+                        Compras para esta orden:{" "}
+                        {o.purchases.map((p, i) => (
+                          <Link key={p.id} href={`/compras?id=${p.id}`} style={{ color: "var(--color-steel)" }}>
+                            {i > 0 ? ", " : ""}
+                            {p.supplierName} {p.number} ({Number(p.total).toFixed(2)} EUR)
+                          </Link>
+                        ))}
+                      </p>
+                    )}
                   </div>
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>

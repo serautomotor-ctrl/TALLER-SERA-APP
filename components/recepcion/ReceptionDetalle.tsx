@@ -9,6 +9,7 @@ import { TextInput } from "@/components/ui/inputs";
 import { IconCamera, IconPlus, IconPrint, IconTrash, IconWhatsapp } from "@/components/ui/icons";
 import { fmtDate, fmtEUR } from "@/lib/format";
 import { compressImage } from "@/lib/image";
+import { SignaturePad } from "@/components/ui/SignaturePad";
 import {
   addFinding,
   addFindingPhoto,
@@ -16,6 +17,8 @@ import {
   removeFinding,
   removeFindingPhoto,
   removeRequestedItem,
+  saveReceptionSignature,
+  clearReceptionSignature,
   setBudgetStatus,
   setCheckpoint,
   setFindingPrice,
@@ -30,6 +33,9 @@ type Reception = {
   mileage: number | null;
   budgetStatus: string;
   checkpoints: Record<string, string>;
+  signatureUrl: string;
+  signerName: string;
+  signedAt: Date | null;
   requestedItems: RequestedItem[];
   findings: Finding[];
 };
@@ -114,9 +120,13 @@ export function ReceptionDetalle({
             Este documento certifica que el vehiculo arriba indicado ha quedado depositado en las instalaciones del taller
             en la fecha y hora senaladas.
           </p>
-          <div style="display:flex; justify-content:space-between; margin-top:48px;">
+          <p style="font-size:12px; color:#444;">El cliente autoriza al taller a realizar los trabajos solicitados y a probar el vehiculo si fuera necesario.</p>
+          <div style="display:flex; justify-content:space-between; align-items:flex-end; margin-top:28px;">
             <div>Firma del taller</div>
-            <div>Firma del cliente</div>
+            <div style="text-align:center;">
+              ${reception.signatureUrl ? `<img src="${reception.signatureUrl}" style="width:200px; display:block;" /><span style="font-size:11px;">${reception.signerName || ""} ${reception.signedAt ? "· " + new Date(reception.signedAt).toLocaleString("es-ES") : ""}</span><br/>` : "<div style='height:60px'></div>"}
+              Firma del cliente
+            </div>
           </div>
         </body>
       </html>
@@ -215,6 +225,8 @@ export function ReceptionDetalle({
           </div>
         </Card>
       </div>
+
+      <SignatureCard reception={reception} defaultName={client?.clientName || ""} />
 
       <Card>
         <SectionTitle>Puntos de control</SectionTitle>
@@ -372,5 +384,40 @@ function FindingRow({ finding }: { finding: Finding }) {
         </div>
       )}
     </div>
+  );
+}
+
+function SignatureCard({ reception, defaultName }: { reception: Reception; defaultName: string }) {
+  const [name, setName] = useState(defaultName);
+  const [saving, startSaving] = useTransition();
+  return (
+    <Card>
+      <SectionTitle>Firma del cliente</SectionTitle>
+      <p style={{ margin: "4px 0 10px", fontFamily: "var(--font-body)", fontSize: 12.5, color: "var(--color-text-muted)" }}>
+        El cliente firma en la tablet para autorizar la reparacion. La firma sale en el resguardo de deposito.
+      </p>
+      {reception.signatureUrl ? (
+        <div style={{ display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={reception.signatureUrl} alt="Firma del cliente" style={{ width: 220, background: "#fff", borderRadius: 8 }} />
+          <div>
+            <p style={{ margin: 0, fontFamily: "var(--font-body)", fontSize: 13, color: "var(--color-text-primary)" }}>{reception.signerName || "Sin nombre"}</p>
+            {reception.signedAt && (
+              <p style={{ margin: "2px 0 8px", fontFamily: "var(--font-body)", fontSize: 12, color: "var(--color-text-muted)" }}>
+                Firmado el {new Date(reception.signedAt).toLocaleString("es-ES")}
+              </p>
+            )}
+            <Button type="button" variant="ghost" onClick={() => startSaving(() => clearReceptionSignature(reception.id))}>
+              Repetir firma
+            </Button>
+          </div>
+        </div>
+      ) : (
+        <div style={{ display: "flex", flexDirection: "column", gap: 8, maxWidth: 520 }}>
+          <TextInput value={name} onChange={(e) => setName(e.target.value)} placeholder="Nombre de quien firma" />
+          <SignaturePad saving={saving} onSave={(url) => startSaving(() => saveReceptionSignature(reception.id, name, url))} />
+        </div>
+      )}
+    </Card>
   );
 }

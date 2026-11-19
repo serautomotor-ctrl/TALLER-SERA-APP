@@ -40,6 +40,8 @@ export default async function ArticulosPage({ searchParams }: { searchParams: Pr
     stock: a.stock,
     minStock: a.minStock,
     supplier: a.supplier,
+    reference: a.reference,
+    location: a.location,
     tracked: a._count.movements > 0,
   }));
 
@@ -51,7 +53,7 @@ export default async function ArticulosPage({ searchParams }: { searchParams: Pr
   const shown = articles.filter((a, i) => {
     if (filter === "bajo" && levels[i] !== "bajo" && levels[i] !== "agotado") return false; // incluye tambien los agotados
     if (filter === "agotado" && levels[i] !== "agotado") return false;
-    if (query && !`${a.name} ${a.supplier}`.toLowerCase().includes(query.toLowerCase())) return false;
+    if (query && !`${a.name} ${a.supplier} ${a.reference || ""}`.toLowerCase().includes(query.toLowerCase())) return false;
     return true;
   });
 

@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/Button";
 import { Field, TextInput } from "@/components/ui/inputs";
 import { IconPlus, IconTrash } from "@/components/ui/icons";
 import { fmtDate, fmtEUR } from "@/lib/format";
+import { toDateKey } from "@/lib/time";
 import {
   addHistory,
   addPendingPayment,
@@ -83,6 +84,12 @@ export function FichaDetalle({ vehicle }: { vehicle: VehicleWithRelations }) {
             <Field label="DNI / CIF">
               <TextInput name="taxId" defaultValue={vehicle.customer.taxId} style={{ width: "100%" }} />
             </Field>
+            <Field label="Descuento habitual % (se aplica al facturar)">
+              <TextInput name="discount" type="number" min="0" max="100" defaultValue={vehicle.customer.discount} style={{ width: "100%" }} />
+            </Field>
+            <Field label="Notas del cliente">
+              <TextInput name="notes" defaultValue={vehicle.customer.notes} placeholder="Condiciones, forma de pago habitual..." style={{ width: "100%" }} />
+            </Field>
             <Button type="submit" style={{ alignSelf: "flex-start", marginTop: 4 }}>
               Guardar cliente
             </Button>
@@ -106,6 +113,22 @@ export function FichaDetalle({ vehicle }: { vehicle: VehicleWithRelations }) {
             <Field label="Kilometraje">
               <TextInput name="mileage" type="number" min="0" defaultValue={vehicle.mileage ?? ""} style={{ width: "100%" }} />
             </Field>
+            <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) minmax(0, 1fr)", gap: 8 }}>
+              <Field label="Proxima ITV">
+                <TextInput name="itvDate" type="date" defaultValue={vehicle.itvDate ? toDateKey(vehicle.itvDate) : ""} style={{ width: "100%" }} />
+              </Field>
+              <Field label="Proxima revision">
+                <TextInput name="nextServiceDate" type="date" defaultValue={vehicle.nextServiceDate ? toDateKey(vehicle.nextServiceDate) : ""} style={{ width: "100%" }} />
+              </Field>
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) minmax(0, 1fr)", gap: 8 }}>
+              <Field label="Revision a los km">
+                <TextInput name="nextServiceKm" type="number" min="0" defaultValue={vehicle.nextServiceKm ?? ""} style={{ width: "100%" }} />
+              </Field>
+              <Field label="Que toca (aviso)">
+                <TextInput name="reminderNote" defaultValue={vehicle.reminderNote} placeholder="Cambio de aceite y filtros" style={{ width: "100%" }} />
+              </Field>
+            </div>
             <Button type="submit" style={{ alignSelf: "flex-start", marginTop: 4 }}>
               Guardar vehiculo
             </Button>

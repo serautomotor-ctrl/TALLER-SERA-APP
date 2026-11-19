@@ -7,7 +7,12 @@ import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
 import { IconInvoice, IconPrint } from "@/components/ui/icons";
 import { fmtDate, fmtEUR } from "@/lib/format";
-import { convertBudgetToInvoice } from "@/app/presupuestos/actions";
+import { clearBudgetSignature, convertBudgetToInvoice, signBudgetInShop } from "@/app/presupuestos/actions";
+import { SendButtons } from "@/components/ui/SendButtons";
+import { SignaturePad } from "@/components/ui/SignaturePad";
+import { TextInput } from "@/components/ui/inputs";
+import { IconSignature } from "@/components/ui/icons";
+import { firstName } from "@/lib/contact";
 
 type BudgetItem = { id: string; concept: string; qty: number; unitPrice: number; discount: number; vat: number; kind: string };
 type Budget = {
@@ -22,6 +27,10 @@ type Budget = {
   total: number;
   createdAt: Date;
   invoiceId: string | null;
+  signatureUrl: string;
+  signerName: string;
+  signedAt: Date | null;
+  acceptedOnline: boolean;
   items: BudgetItem[];
 };
 type Company = {
@@ -36,14 +45,27 @@ type Company = {
   logoUrl: string;
 };
 
-export function BudgetViewModal({ budget, company }: { budget: Budget; company: Company }) {
+export function BudgetViewModal({
+  budget,
+  company,
+  contact,
+  sharePath,
+}: {
+  budget: Budget;
+  company: Company;
+  contact: { phone: string; email: string };
+  sharePath: string;
+}) {
+  const [signing, setSigning] = useState(false);
+  const [signerName, setSignerName] = useState(budget.clientName);
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [budgetError, setBudgetError] = useState("");
 
   const close = () => router.replace("/presupuestos");
 
-  const handlePrint = () => {
+  const handlePrint = (proforma = false) => {
+    const docLabel = proforma ? "FACTURA PROFORMA" : "PRESUPUESTO";
     const w = window.open("", "_blank", "width=520,height=720");
     if (!w) return;
 
@@ -65,7 +87,7 @@ export function BudgetViewModal({ budget, company }: { budget: Budget; company: 
 
     w.document.write(`
       <html>
-        <head><title>Presupuesto ${budget.number}</title></head>
+        <head><title>${proforma ? "Proforma" : "Presupuesto"} ${budget.number}</title></head>
         <body style="font-family: Arial, sans-serif; padding:24px; color:#111; position:relative; font-size:13px;" onload="window.print()">
           ${company.logoUrl ? `<img src="${company.logoUrl}" style="position:fixed; top:50%; left:50%; width:340px; height:340px; object-fit:contain; transform:translate(-50%,-50%); opacity:0.09; z-index:0;" />` : ""}
           <div style="position:relative; z-index:1;">
@@ -81,7 +103,7 @@ export function BudgetViewModal({ budget, company }: { budget: Budget; company: 
               </div>
             </div>
             <div style="text-align:right; border:1px solid #999; border-radius:6px; padding:8px 12px;">
-              <p style="margin:0; font-weight:bold;">PRESUPUESTO: ${budget.number}</p>
+              <p style="margin:0; font-weight:bold;">${docLabel}: ${budget.number}</p>
               <p style="margin:2px 0 0; color:#333;">Fecha: ${fmtDate(budget.createdAt)}</p>
             </div>
           </div>
@@ -95,12 +117,13 @@ export function BudgetViewModal({ budget, company }: { budget: Budget; company: 
                 <p style="margin:0;">IVA: <strong>${budget.vatTotal.toFixed(2)} EUR</strong></p>
               </div>
               <div style="border:2px solid #111; border-radius:0 6px 6px 0; padding:10px 18px; display:flex; flex-direction:column; justify-content:center; align-items:flex-end;">
-                <span style="font-size:11px; text-transform:uppercase; color:#333;">Total presupuesto</span>
+                <span style="font-size:11px; text-transform:uppercase; color:#333;">${proforma ? "Total proforma" : "Total presupuesto"}</span>
                 <span style="font-size:24px; font-weight:bold;">${budget.total.toFixed(2)} EUR</span>
               </div>
             </div>
           </div>
-          <p style="margin-top:18px; font-size:11px; color:#888;">Presupuesto sin validez de factura. Sujeto a confirmacion.</p>
+          ${budget.signatureUrl ? `<div style="margin-top:18px; font-size:12px;"><img src="${budget.signatureUrl}" style="width:200px; display:block;" />Aceptado por ${budget.signerName}${budget.signedAt ? " el " + new Date(budget.signedAt).toLocaleString("es-ES") : ""}</div>` : ""}
+          <p style="margin-top:18px; font-size:11px; color:#888;">${proforma ? "Factura proforma: documento sin validez fiscal. La factura definitiva se emitira al finalizar el trabajo." : "Presupuesto sin validez de factura. Sujeto a confirmacion."}</p>
           </div>
         </body>
       </html>
@@ -171,9 +194,63 @@ export function BudgetViewModal({ budget, company }: { budget: Budget; company: 
           </Button>
         )}
 
-        <Button variant="ghost" type="button" onClick={handlePrint}>
-          <IconPrint /> Imprimir / descargar
-        </Button>
+        <div style={{ display: "flex", gap: 8 }}>
+          <Button variant="ghost" type="button" onClick={() => handlePrint(false)} style={{ flex: 1 }}>
+            <IconPrint /> Imprimir
+          </Button>
+          <Button variant="ghost" type="button" onClick={() => handlePrint(true)} style={{ flex: 1 }}>
+            <IconPrint /> Proforma
+          </Button>
+        </div>
+
+        <div style={{ background: "var(--color-surface-2)", borderRadius: 8, padding: 10, display: "flex", flexDirection: "column", gap: 8 }}>
+          <p style={{ margin: 0, fontFamily: "var(--font-body)", fontSize: 12, fontWeight: 600, color: "var(--color-text-muted)", textTransform: "uppercase" }}>
+            Aceptacion del cliente
+          </p>
+          {budget.signedAt ? (
+            <>
+              {budget.signatureUrl && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={budget.signatureUrl} alt="Firma" style={{ width: 200, background: "#fff", borderRadius: 6 }} />
+              )}
+              <p style={{ margin: 0, fontFamily: "var(--font-body)", fontSize: 12.5, color: "var(--color-success)" }}>
+                {budget.acceptedOnline ? "Aceptado online" : "Firmado en el taller"} por {budget.signerName} el {new Date(budget.signedAt).toLocaleString("es-ES")}
+              </p>
+              <Button type="button" variant="ghost" onClick={() => startTransition(() => clearBudgetSignature(budget.id))}>
+                Quitar firma
+              </Button>
+            </>
+          ) : signing ? (
+            <>
+              <TextInput value={signerName} onChange={(e) => setSignerName(e.target.value)} placeholder="Nombre de quien firma" />
+              <SignaturePad
+                saving={pending}
+                onSave={(url) =>
+                  startTransition(async () => {
+                    await signBudgetInShop(budget.id, signerName, url);
+                    setSigning(false);
+                  })
+                }
+              />
+            </>
+          ) : (
+            <>
+              <p style={{ margin: 0, fontFamily: "var(--font-body)", fontSize: 12, color: "var(--color-text-faint)" }}>
+                Enviale el enlace para que lo acepte y firme desde el movil, o que firme aqui en la tablet.
+              </p>
+              <Button type="button" onClick={() => setSigning(true)}>
+                <IconSignature /> Firmar en la tablet
+              </Button>
+            </>
+          )}
+          <SendButtons
+            phone={contact.phone}
+            email={contact.email}
+            subject={`Presupuesto ${budget.number} - ${company.workshopName}`}
+            message={`Hola${firstName(budget.clientName) ? " " + firstName(budget.clientName) : ""}, te enviamos el presupuesto ${budget.number} para tu vehiculo ${budget.plate} por importe de ${fmtEUR(budget.total)}. Puedes verlo y aceptarlo con tu firma aqui:`}
+            path={sharePath}
+          />
+        </div>
       </div>
     </Modal>
   );

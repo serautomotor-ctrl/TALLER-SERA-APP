@@ -89,11 +89,15 @@ function EntryRow({
 export function HorarioDial({
   activeEntries,
   startEntryAction,
+  mechanics = [],
+  defaultMechanicId = null,
   togglePauseAction,
   finishEntryAction,
 }: {
   activeEntries: ActiveEntry[];
   startEntryAction: (formData: FormData) => void;
+  mechanics?: { id: string; name: string }[];
+  defaultMechanicId?: string | null;
   togglePauseAction: (id: string) => void;
   finishEntryAction: (id: string) => void;
 }) {
@@ -118,6 +122,20 @@ export function HorarioDial({
       <form action={startEntryAction} style={{ width: "100%", display: "flex", flexDirection: "column", gap: 10, paddingTop: activeEntries.length > 0 ? 4 : 0, borderTop: activeEntries.length > 0 ? "1px solid var(--color-border)" : "none" }}>
         <TextInput name="task" placeholder="Descripcion de la tarea" />
         <TextInput name="plate" placeholder="Matricula (opcional)" style={{ textTransform: "uppercase" }} />
+        {mechanics.length > 0 && (
+          <select
+            name="mechanicId"
+            defaultValue={defaultMechanicId || ""}
+            style={{ background: "var(--color-surface-2)", border: "1px solid var(--color-border)", borderRadius: 8, padding: "9px 11px", color: "var(--color-text-primary)", fontFamily: "var(--font-body)", fontSize: 14 }}
+          >
+            <option value="">Operario (opcional)</option>
+            {mechanics.map((m) => (
+              <option key={m.id} value={m.id}>
+                {m.name}
+              </option>
+            ))}
+          </select>
+        )}
         <Button variant="primary" type="submit">
           <IconPlay size={16} /> Iniciar nueva tarea
         </Button>

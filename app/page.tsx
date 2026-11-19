@@ -10,10 +10,18 @@ import { fmtDate, fmtDur, fmtEUR, fmtTime } from "@/lib/format";
 import { finishedEntryDurationMs, startOfToday } from "@/lib/time";
 import { prisma } from "@/lib/prisma";
 import { stockLevel } from "@/lib/stock";
+import { SECTIONS, canAccess } from "@/lib/permissions";
+import { getSessionUser } from "@/lib/session";
+import { nowMs } from "@/lib/time";
 
 export const dynamic = "force-dynamic";
 
-export default async function InicioPage() {
+export default async function InicioPage({ searchParams }: { searchParams: Promise<{ sinpermiso?: string }> }) {
+  const { sinpermiso } = await searchParams;
+  const user = await getSessionUser();
+  const can = (k: Parameters<typeof canAccess>[1]) => !user || canAccess(user, k);
+  const deniedLabel = sinpermiso ? SECTIONS.find((s) => s.key === sinpermiso)?.label : null;
+  const in30 = new Date(nowMs() + 30 * 86_400_000);
   const [openOrders, vehicleCount, pendingAgg, todayEntries, activeEntries, recentOrders, stockRows] = await Promise.all([
     prisma.order.count({ where: { status: { not: "cerrada" } } }),
     prisma.vehicle.count(),
@@ -23,6 +31,14 @@ export default async function InicioPage() {
     prisma.order.findMany({ orderBy: { createdAt: "desc" }, take: 4 }),
     prisma.article.findMany({ select: { stock: true, minStock: true, _count: { select: { movements: true } } } }),
   ]);
+  const [clockedIn, lateOrders, remindersDue, pendingInvoices, budgetsAccepted] = await Promise.all([
+    prisma.clocking.findMany({ where: { out: null }, include: { mechanic: true } }),
+    prisma.order.count({ where: { status: { not: "cerrada" }, promisedAt: { lt: startOfToday() } } }),
+    prisma.vehicle.count({ where: { OR: [{ itvDate: { lte: in30 } }, { nextServiceDate: { lte: in30 } }] } }),
+    prisma.invoice.findMany({ where: { paymentStatus: { not: "cobrada" } }, select: { total: true, paidAmount: true } }),
+    prisma.budget.count({ where: { signedAt: { not: null }, invoiceId: null } }),
+  ]);
+  const invoicePending = pendingInvoices.reduce((s, i) => s + Number(i.total) - Number(i.paidAmount), 0);
   const toOrder = stockRows.filter((a) => {
     const level = stockLevel(a.stock, a.minStock, a._count.movements > 0);
     return level === "bajo" || level === "agotado";
@@ -33,7 +49,27 @@ export default async function InicioPage() {
 
   return (
     <div>
-      <Header title="Inicio" subtitle="Resumen del dia en el taller" />
+      <Header title="Inicio" subtitle={user ? `Hola, ${user.name}. Resumen del dia en el taller` : "Resumen del dia en el taller"} />
+      {deniedLabel && (
+        <div style={{ ...banner, background: "var(--color-danger-soft)", borderColor: "var(--color-danger)", color: "var(--color-danger)" }}>
+          No tienes permiso para entrar en &laquo;{deniedLabel}&raquo;. Pideselo al administrador.
+        </div>
+      )}
+      {can("taller") && lateOrders > 0 && (
+        <Link href="/taller" style={{ ...banner, background: "var(--color-danger-soft)", borderColor: "var(--color-danger)", color: "var(--color-danger)" }}>
+          {lateOrders === 1 ? "Hay 1 orden retrasada" : `Hay ${lateOrders} ordenes retrasadas`} (pasada la fecha prometida al cliente) · Ver planificador →
+        </Link>
+      )}
+      {can("presupuestos") && budgetsAccepted > 0 && (
+        <Link href="/presupuestos" style={{ ...banner, background: "var(--color-success-soft)", borderColor: "var(--color-success)", color: "var(--color-success)" }}>
+          {budgetsAccepted === 1 ? "1 presupuesto firmado" : `${budgetsAccepted} presupuestos firmados`} por el cliente y sin facturar · Ver presupuestos →
+        </Link>
+      )}
+      {can("avisos") && remindersDue > 0 && (
+        <Link href="/avisos" style={{ ...banner, background: "var(--color-steel-soft)", borderColor: "var(--color-steel)", color: "var(--color-steel)" }}>
+          {remindersDue === 1 ? "1 vehiculo con ITV o revision" : `${remindersDue} vehiculos con ITV o revision`} en los proximos 30 dias · Avisar a los clientes →
+        </Link>
+      )}
       {toOrder > 0 && (
         <Link
           href="/articulos?filtro=bajo"
@@ -57,7 +93,8 @@ export default async function InicioPage() {
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 12, marginBottom: 22 }}>
         <MetricCard label="Ordenes abiertas" value={openOrders} tone="accent" href="/ordenes" />
         <MetricCard label="Vehiculos registrados" value={vehicleCount} tone="steel" href="/fichas" />
-        <MetricCard label="Cobros pendientes" value={fmtEUR(pendingTotal)} tone="warning" href="/fichas" />
+        <MetricCard label="Facturas sin cobrar" value={fmtEUR(invoicePending + pendingTotal)} tone="warning" href={can("caja") ? "/caja" : undefined} />
+        <MetricCard label="Fichados ahora" value={clockedIn.length ? clockedIn.map((c) => c.mechanic.name).join(", ") : "Nadie"} tone="steel" href={can("operarios") ? "/operarios" : undefined} />
         <MetricCard label="Horas de hoy" value={fmtDur(todayMs)} tone="success" href="/horario" />
       </div>
 
@@ -138,3 +175,15 @@ export default async function InicioPage() {
     </div>
   );
 }
+
+const banner = {
+  display: "block",
+  marginBottom: 10,
+  padding: "10px 14px",
+  borderRadius: 10,
+  border: "1px solid",
+  fontFamily: "var(--font-body)",
+  fontSize: 13.5,
+  fontWeight: 600,
+  textDecoration: "none",
+} as const;

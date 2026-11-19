@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { moveStock } from "@/lib/stock";
+import { getSessionUser } from "@/lib/session";
 import type { $Enums } from "@/app/generated/prisma/client";
 
 export async function createOrder(formData: FormData) {
@@ -21,6 +22,7 @@ export async function createOrder(formData: FormData) {
 export async function setOrderStatus(orderId: string, status: string) {
   await prisma.order.update({ where: { id: orderId }, data: { status: status as $Enums.OrderStatus } });
   revalidatePath("/ordenes");
+  revalidatePath("/taller");
   revalidatePath("/");
 }
 
@@ -37,8 +39,9 @@ export async function startOrderTimer(orderId: string) {
   const order = await prisma.order.findUnique({ where: { id: orderId } });
   if (!order) return;
 
+  const user = await getSessionUser();
   await prisma.timeEntry.create({
-    data: { task: order.description || "Reparacion", plate: order.plate, orderId },
+    data: { task: order.description || "Reparacion", plate: order.plate, orderId, mechanicId: order.mechanicId || user?.mechanicId || null },
   });
   if (order.status === "abierta") {
     await prisma.order.update({ where: { id: orderId }, data: { status: "en_progreso" } });
@@ -142,7 +145,27 @@ export async function createArticle(formData: FormData) {
 }
 
 export async function removeArticle(articleId: string) {
-  await prisma.article.delete({ where: { id: articleId } });
+  const a = await prisma.article.delete({ where: { id: articleId } });
+  const { logAction } = await import("@/lib/audit");
+  await logAction("Articulo borrado", a.name);
   revalidatePath("/ordenes");
   revalidatePath("/articulos");
+}
+
+export async function setOrderPlanning(
+  orderId: string,
+  data: { mechanicId?: string | null; plannedDate?: string | null; promisedAt?: string | null; plannedHours?: string | null }
+) {
+  const toDate = (v: string | null | undefined) => (v ? new Date(`${v}T09:00:00`) : null);
+  const patch: Record<string, unknown> = {};
+  if (data.mechanicId !== undefined) patch.mechanicId = data.mechanicId || null;
+  if (data.plannedDate !== undefined) patch.plannedDate = toDate(data.plannedDate);
+  if (data.promisedAt !== undefined) patch.promisedAt = toDate(data.promisedAt);
+  if (data.plannedHours !== undefined) {
+    const h = parseFloat(String(data.plannedHours || "").replace(",", "."));
+    patch.plannedHours = Number.isFinite(h) && h > 0 ? h : null;
+  }
+  await prisma.order.update({ where: { id: orderId }, data: patch });
+  revalidatePath("/taller");
+  revalidatePath("/ordenes");
 }

@@ -7,16 +7,23 @@ import { Field, Select, TextInput } from "@/components/ui/inputs";
 import { Modal } from "@/components/ui/Modal";
 import { IconPlus, IconTrash } from "@/components/ui/icons";
 import { fmtEUR } from "@/lib/format";
-import { createInvoice } from "@/app/facturas/actions";
+import { createInsuranceInvoices, createInvoice } from "@/app/facturas/actions";
 
-type Vehicle = { id: string; plate: string; clientName: string; clientNif: string; clientAddress: string };
+type Vehicle = { id: string; plate: string; clientName: string; clientNif: string; clientAddress: string; discount?: number };
+type Insurer = { id: string; name: string };
 type ItemKind = "concepto" | "mano_obra";
 type Item = { id: number; kind: ItemKind; concept: string; qty: number; unitPrice: number; discount: number; vat: number };
 
 let nextId = 1;
 const blankItem = (kind: ItemKind): Item => ({ id: nextId++, kind, concept: "", qty: 1, unitPrice: 0, discount: 0, vat: 21 });
 
-export function NewInvoiceButton({ vehicles }: { vehicles: Vehicle[] }) {
+export function NewInvoiceButton({ vehicles, insurers = [] }: { vehicles: Vehicle[]; insurers?: Insurer[] }) {
+  const [insured, setInsured] = useState(false);
+  const [insurerId, setInsurerId] = useState("");
+  const [claimNumber, setClaimNumber] = useState("");
+  const [deductible, setDeductible] = useState("");
+  const [error, setError] = useState("");
+  const [defaultDiscount, setDefaultDiscount] = useState(0);
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [plate, setPlate] = useState("");
@@ -42,13 +49,16 @@ export function NewInvoiceButton({ vehicles }: { vehicles: Vehicle[] }) {
       setClientName(match.clientName);
       setClientNif(match.clientNif);
       setClientAddress(match.clientAddress);
+      const d = match.discount || 0;
+      setDefaultDiscount(d);
+      if (d) setItems((prev) => prev.map((it) => (it.discount ? it : { ...it, discount: d })));
     }
   };
 
   const updateItem = (id: number, patch: Partial<Item>) => {
     setItems((prev) => prev.map((it) => (it.id === id ? { ...it, ...patch } : it)));
   };
-  const addItem = (kind: ItemKind) => setItems((prev) => [...prev, blankItem(kind)]);
+  const addItem = (kind: ItemKind) => setItems((prev) => [...prev, { ...blankItem(kind), discount: defaultDiscount }]);
   const removeItem = (id: number) => setItems((prev) => prev.filter((it) => it.id !== id));
 
   const lineBase = (it: Item) => it.qty * it.unitPrice * (1 - (it.discount || 0) / 100);
@@ -59,8 +69,12 @@ export function NewInvoiceButton({ vehicles }: { vehicles: Vehicle[] }) {
 
   const handleSubmit = async () => {
     setSubmitting(true);
-    const res = await createInvoice({ plate, clientName, clientNif, clientAddress, items });
+    setError("");
+    const res = insured
+      ? await createInsuranceInvoices({ plate, clientName, clientNif, clientAddress, items, insurerId, claimNumber, deductible: parseFloat(deductible.replace(",", ".")) || 0 })
+      : await createInvoice({ plate, clientName, clientNif, clientAddress, items });
     setSubmitting(false);
+    if (res.error) setError(res.error);
     if (res.invoiceId) {
       setOpen(false);
       reset();
@@ -98,6 +112,37 @@ export function NewInvoiceButton({ vehicles }: { vehicles: Vehicle[] }) {
               </Field>
             </div>
 
+            {defaultDiscount > 0 && (
+              <p style={{ margin: 0, fontSize: 12, color: "var(--color-success)" }}>Este cliente tiene un {defaultDiscount}% de descuento habitual: ya esta puesto en las lineas.</p>
+            )}
+
+            {insurers.length > 0 && (
+              <div style={{ background: "var(--color-surface-2)", borderRadius: 8, padding: 10, display: "flex", flexDirection: "column", gap: 8 }}>
+                <label style={{ display: "flex", gap: 8, alignItems: "center", fontSize: 13, fontWeight: 600 }}>
+                  <input type="checkbox" checked={insured} onChange={(e) => setInsured(e.target.checked)} /> Siniestro de aseguradora
+                </label>
+                {insured && (
+                  <>
+                    <Select value={insurerId} onChange={(e) => setInsurerId(e.target.value)}>
+                      <option value="">Elige la compania...</option>
+                      {insurers.map((i) => (
+                        <option key={i.id} value={i.id}>
+                          {i.name}
+                        </option>
+                      ))}
+                    </Select>
+                    <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) minmax(0, 1fr)", gap: 8 }}>
+                      <TextInput value={claimNumber} onChange={(e) => setClaimNumber(e.target.value)} placeholder="N.º de siniestro" />
+                      <TextInput value={deductible} onChange={(e) => setDeductible(e.target.value)} placeholder="Franquicia (con IVA)" />
+                    </div>
+                    <p style={{ margin: 0, fontSize: 11.5, color: "var(--color-text-faint)" }}>
+                      Se emiten dos facturas: una a la aseguradora por la reparacion menos la franquicia y otra al cliente por la franquicia.
+                    </p>
+                  </>
+                )}
+              </div>
+            )}
+
             <ItemsSection
               title="Conceptos"
               placeholder="Pieza, servicio..."
@@ -124,8 +169,9 @@ export function NewInvoiceButton({ vehicles }: { vehicles: Vehicle[] }) {
               <Row label="Total" value={fmtEUR(total)} strong />
             </div>
 
-            <Button variant="primary" type="button" disabled={!canSubmit || submitting} onClick={handleSubmit}>
-              {submitting ? "Emitiendo..." : "Emitir factura"}
+            {error && <p style={{ margin: 0, fontSize: 12.5, color: "var(--color-danger)" }}>{error}</p>}
+            <Button variant="primary" type="button" disabled={!canSubmit || submitting || (insured && !insurerId)} onClick={handleSubmit}>
+              {submitting ? "Emitiendo..." : insured ? "Emitir facturas del siniestro" : "Emitir factura"}
             </Button>
           </div>
         </Modal>

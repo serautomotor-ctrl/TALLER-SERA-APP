@@ -48,6 +48,8 @@ model Customer {
   taxId     String    @default("")
   createdAt DateTime  @default(now())
   vehicles  Vehicle[]
+  discount  Int       @default(0)
+  notes     String    @default("")
 }
 
 model Vehicle {
@@ -63,6 +65,11 @@ model Vehicle {
   createdAt       DateTime       @default(now())
   history         HistoryEntry[]
   warranties      Warranty[]
+  itvDate         DateTime?
+  nextServiceDate DateTime?
+  nextServiceKm   Int?
+  reminderNote    String         @default("")
+  lastReminderAt  DateTime?
 }
 
 model HistoryEntry {
@@ -91,6 +98,12 @@ model Order {
   items        OrderItem[]
   timeEntries  TimeEntry[]
   reception    Reception?
+  mechanic     Mechanic?   @relation(fields: [mechanicId], references: [id], onDelete: SetNull)
+  mechanicId   String?
+  plannedDate  DateTime?
+  plannedHours Decimal?    @db.Decimal(6, 2)
+  promisedAt   DateTime?
+  purchases    Purchase[]
 }
 
 enum BudgetStatus {
@@ -111,6 +124,9 @@ model Reception {
   sentAt         DateTime?
   requestedItems RequestedItem[]
   findings       Finding[]
+  signatureUrl   String          @default("")
+  signerName     String          @default("")
+  signedAt       DateTime?
 }
 
 model RequestedItem {
@@ -130,15 +146,21 @@ model Finding {
 }
 
 model Article {
-  id         String          @id @default(cuid())
-  name       String
-  price      Decimal         @db.Decimal(10, 2)
-  costPrice  Decimal         @default(0) @db.Decimal(10, 2)
-  stock      Int             @default(0)
-  minStock   Int             @default(0)
-  supplier   String          @default("")
-  orderItems OrderItem[]
-  movements  StockMovement[]
+  id            String              @id @default(cuid())
+  name          String
+  price         Decimal             @db.Decimal(10, 2)
+  costPrice     Decimal             @default(0) @db.Decimal(10, 2)
+  stock         Int                 @default(0)
+  minStock      Int                 @default(0)
+  supplier      String              @default("")
+  orderItems    OrderItem[]
+  movements     StockMovement[]
+  supplierRef   Supplier?           @relation(fields: [supplierId], references: [id], onDelete: SetNull)
+  supplierId    String?
+  location      String              @default("")
+  reference     String              @default("")
+  purchaseItems PurchaseItem[]
+  poItems       PurchaseOrderItem[]
 }
 
 enum StockMovementKind {
@@ -207,6 +229,11 @@ model Invoice {
   paidAmount    Decimal        @default(0) @db.Decimal(10, 2)
   paidAt        DateTime?
   items         InvoiceItem[]
+  insurer       Insurer?       @relation(fields: [insurerId], references: [id], onDelete: SetNull)
+  insurerId     String?
+  claimNumber   String         @default("")
+  notes         String         @default("")
+  payments      Payment[]
 }
 
 enum InvoiceItemKind {
@@ -227,18 +254,22 @@ model InvoiceItem {
 }
 
 model Budget {
-  id            String       @id @default(cuid())
-  number        String       @unique
-  plate         String
-  clientName    String       @default("")
-  clientNif     String       @default("")
-  clientAddress String       @default("")
-  subtotal      Decimal      @db.Decimal(10, 2)
-  vatTotal      Decimal      @db.Decimal(10, 2)
-  total         Decimal      @db.Decimal(10, 2)
-  createdAt     DateTime     @default(now())
-  invoiceId     String?
-  items         BudgetItem[]
+  id             String       @id @default(cuid())
+  number         String       @unique
+  plate          String
+  clientName     String       @default("")
+  clientNif      String       @default("")
+  clientAddress  String       @default("")
+  subtotal       Decimal      @db.Decimal(10, 2)
+  vatTotal       Decimal      @db.Decimal(10, 2)
+  total          Decimal      @db.Decimal(10, 2)
+  createdAt      DateTime     @default(now())
+  invoiceId      String?
+  items          BudgetItem[]
+  signatureUrl   String       @default("")
+  signerName     String       @default("")
+  signedAt       DateTime?
+  acceptedOnline Boolean      @default(false)
 }
 
 model BudgetItem {
@@ -365,4 +396,255 @@ model TimeEntry {
   pausedMs   Int       @default(0)
   paused     Boolean   @default(false)
   pauseStart DateTime?
+  mechanic   Mechanic? @relation(fields: [mechanicId], references: [id], onDelete: SetNull)
+  mechanicId String?
+}
+
+// ---------- Fase 18: operarios ----------
+
+model Mechanic {
+  id          String      @id @default(cuid())
+  name        String
+  color       String      @default("#E8833A")
+  hourlyCost  Decimal     @default(0) @db.Decimal(10, 2)
+  active      Boolean     @default(true)
+  createdAt   DateTime    @default(now())
+  orders      Order[]
+  timeEntries TimeEntry[]
+  absences    Absence[]
+  clockings   Clocking[]
+  users       User[]
+}
+
+enum AbsenceKind {
+  vacaciones
+  baja
+  ausencia
+}
+
+model Absence {
+  id         String      @id @default(cuid())
+  mechanic   Mechanic    @relation(fields: [mechanicId], references: [id], onDelete: Cascade)
+  mechanicId String
+  kind       AbsenceKind @default(vacaciones)
+  from       DateTime
+  to         DateTime
+  note       String      @default("")
+  createdAt  DateTime    @default(now())
+}
+
+model Clocking {
+  id         String    @id @default(cuid())
+  mechanic   Mechanic  @relation(fields: [mechanicId], references: [id], onDelete: Cascade)
+  mechanicId String
+  in         DateTime  @default(now())
+  out        DateTime?
+  note       String    @default("")
+
+  @@index([mechanicId, in])
+}
+
+// ---------- Fase 19: cobros y caja ----------
+
+model Payment {
+  id        String        @id @default(cuid())
+  invoice   Invoice       @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  invoiceId String
+  amount    Decimal       @db.Decimal(10, 2)
+  method    PaymentMethod @default(efectivo)
+  date      DateTime      @default(now())
+  note      String        @default("")
+}
+
+enum CashKind {
+  entrada
+  salida
+}
+
+model CashMovement {
+  id        String   @id @default(cuid())
+  date      DateTime @default(now())
+  kind      CashKind
+  amount    Decimal  @db.Decimal(10, 2)
+  concept   String
+  createdAt DateTime @default(now())
+}
+
+model CashClose {
+  id        String   @id @default(cuid())
+  date      DateTime @default(now())
+  expected  Decimal  @db.Decimal(10, 2)
+  counted   Decimal  @db.Decimal(10, 2)
+  note      String   @default("")
+  createdAt DateTime @default(now())
+}
+
+// ---------- Fase 20: proveedores y compras ----------
+
+model Supplier {
+  id             String          @id @default(cuid())
+  name           String
+  taxId          String          @default("")
+  phone          String          @default("")
+  email          String          @default("")
+  address        String          @default("")
+  notes          String          @default("")
+  createdAt      DateTime        @default(now())
+  articles       Article[]
+  purchases      Purchase[]
+  purchaseOrders PurchaseOrder[]
+}
+
+enum PurchaseKind {
+  albaran
+  factura
+  gasto
+}
+
+model Purchase {
+  id           String         @id @default(cuid())
+  supplier     Supplier?      @relation(fields: [supplierId], references: [id], onDelete: SetNull)
+  supplierId   String?
+  supplierName String         @default("")
+  supplierNif  String         @default("")
+  kind         PurchaseKind   @default(factura)
+  number       String         @default("")
+  date         DateTime       @default(now())
+  category     String         @default("Recambios")
+  subtotal     Decimal        @db.Decimal(10, 2)
+  vatTotal     Decimal        @db.Decimal(10, 2)
+  total        Decimal        @db.Decimal(10, 2)
+  paid         Boolean        @default(false)
+  paidAt       DateTime?
+  dueDate      DateTime?
+  order        Order?         @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  orderId      String?
+  invoicedIn   Purchase?      @relation("AlbaranFactura", fields: [invoicedInId], references: [id], onDelete: SetNull)
+  invoicedInId String?
+  albaranes    Purchase[]     @relation("AlbaranFactura")
+  notes        String         @default("")
+  createdAt    DateTime       @default(now())
+  items        PurchaseItem[]
+}
+
+model PurchaseItem {
+  id         String   @id @default(cuid())
+  purchase   Purchase @relation(fields: [purchaseId], references: [id], onDelete: Cascade)
+  purchaseId String
+  article    Article? @relation(fields: [articleId], references: [id], onDelete: SetNull)
+  articleId  String?
+  concept    String
+  qty        Int      @default(1)
+  unitCost   Decimal  @db.Decimal(10, 2)
+  vat        Int      @default(21)
+}
+
+enum PurchaseOrderStatus {
+  borrador
+  enviado
+  recibido
+}
+
+model PurchaseOrder {
+  id         String              @id @default(cuid())
+  number     String              @unique
+  supplier   Supplier?           @relation(fields: [supplierId], references: [id], onDelete: SetNull)
+  supplierId String?
+  status     PurchaseOrderStatus @default(borrador)
+  notes      String              @default("")
+  createdAt  DateTime            @default(now())
+  sentAt     DateTime?
+  receivedAt DateTime?
+  items      PurchaseOrderItem[]
+}
+
+model PurchaseOrderItem {
+  id              String        @id @default(cuid())
+  purchaseOrder   PurchaseOrder @relation(fields: [purchaseOrderId], references: [id], onDelete: Cascade)
+  purchaseOrderId String
+  article         Article?      @relation(fields: [articleId], references: [id], onDelete: SetNull)
+  articleId       String?
+  name            String
+  qty             Int           @default(1)
+}
+
+// ---------- Fase 21: aseguradoras y vehiculos de cortesia ----------
+
+model Insurer {
+  id        String    @id @default(cuid())
+  name      String
+  taxId     String    @default("")
+  address   String    @default("")
+  phone     String    @default("")
+  email     String    @default("")
+  notes     String    @default("")
+  createdAt DateTime  @default(now())
+  invoices  Invoice[]
+}
+
+model CourtesyCar {
+  id        String         @id @default(cuid())
+  plate     String         @unique
+  brand     String         @default("")
+  model     String         @default("")
+  notes     String         @default("")
+  active    Boolean        @default(true)
+  createdAt DateTime       @default(now())
+  loans     CourtesyLoan[]
+}
+
+model CourtesyLoan {
+  id           String      @id @default(cuid())
+  car          CourtesyCar @relation(fields: [carId], references: [id], onDelete: Cascade)
+  carId        String
+  clientName   String
+  phone        String      @default("")
+  clientPlate  String      @default("")
+  orderId      String?
+  outAt        DateTime    @default(now())
+  expectedBack DateTime?
+  returnedAt   DateTime?
+  kmOut        Int?
+  kmIn         Int?
+  fuelOut      String      @default("")
+  fuelIn       String      @default("")
+  notes        String      @default("")
+  signatureUrl String      @default("")
+}
+
+// ---------- Fase 22: fiscal ----------
+
+model Asset {
+  id           String   @id @default(cuid())
+  name         String
+  purchaseDate DateTime
+  cost         Decimal  @db.Decimal(10, 2)
+  years        Int      @default(10)
+  notes        String   @default("")
+  createdAt    DateTime @default(now())
+}
+
+// ---------- Fase 23: usuarios, permisos y registro ----------
+
+model User {
+  id           String    @id @default(cuid())
+  name         String    @unique
+  passwordHash String
+  passwordSalt String
+  permissions  String[]  @default([])
+  isAdmin      Boolean   @default(false)
+  mechanic     Mechanic? @relation(fields: [mechanicId], references: [id], onDelete: SetNull)
+  mechanicId   String?
+  active       Boolean   @default(true)
+  createdAt    DateTime  @default(now())
+}
+
+model AuditLog {
+  id       String   @id @default(cuid())
+  at       DateTime @default(now())
+  userName String   @default("")
+  action   String
+  detail   String   @default("")
+
+  @@index([at])
 }

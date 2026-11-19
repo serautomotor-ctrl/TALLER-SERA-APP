@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { hashPassword, verifyPassword } from "@/lib/auth";
+import { logAction } from "@/lib/audit";
 
 export async function updateSettings(formData: FormData) {
   await prisma.settings.update({
@@ -19,6 +20,7 @@ export async function updateSettings(formData: FormData) {
       hourlyRate: parseFloat(String(formData.get("hourlyRate") || "0").replace(",", ".")) || 0,
     },
   });
+  await logAction("Datos del taller modificados");
   revalidatePath("/ajustes");
   revalidatePath("/");
 }
@@ -61,6 +63,7 @@ export async function updateAiApiKey(formData: FormData) {
 export async function updateNextInvoiceNumber(formData: FormData) {
   const value = String(formData.get("nextInvoiceNumberOverride") || "").trim();
   await prisma.settings.update({ where: { id: "singleton" }, data: { nextInvoiceNumberOverride: value } });
+  await logAction("Proximo numero de factura fijado a mano", value || "(automatico)");
   revalidatePath("/ajustes");
 }
 
@@ -106,6 +109,7 @@ export async function changePassword(formData: FormData): Promise<{ error?: stri
     where: { id: "singleton" },
     data: { passwordHash: hash, passwordSalt: salt },
   });
+  await logAction("Contrasena general del taller cambiada");
 
   return { ok: true };
 }

@@ -256,3 +256,109 @@ export function IconTrash(props: IconProps) {
     </svg>
   );
 }
+
+export function IconMail(props: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.8" {...props}>
+      <rect x="3.5" y="5.5" width="17" height="13" rx="2" />
+      <path d="m4 7 8 6 8-6" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+export function IconLink(props: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.8" {...props}>
+      <path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1" strokeLinecap="round" />
+      <path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+export function IconBell(props: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.8" {...props}>
+      <path d="M6 16.5V11a6 6 0 1 1 12 0v5.5l1.5 2h-15Z" strokeLinejoin="round" />
+      <path d="M10 20.5a2 2 0 0 0 4 0" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+export function IconBoard(props: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.8" {...props}>
+      <rect x="3.5" y="4" width="17" height="16" rx="2" />
+      <path d="M9.2 4v16M14.8 4v16" />
+      <path d="M5.5 7.5h2M11 7.5h2M16.5 7.5h2M5.5 10.5h2M11 10.5h2" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+export function IconUsers(props: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.8" {...props}>
+      <circle cx="9" cy="8.5" r="3.2" />
+      <path d="M3.5 19.5c.6-3.2 2.8-5 5.5-5s4.9 1.8 5.5 5" strokeLinecap="round" />
+      <circle cx="16.5" cy="9" r="2.5" />
+      <path d="M16 14.2c2.3.1 4 1.7 4.5 4.6" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+export function IconCash(props: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.8" {...props}>
+      <rect x="3" y="6.5" width="18" height="11" rx="1.8" />
+      <circle cx="12" cy="12" r="2.6" />
+      <path d="M6.5 9.5v5M17.5 9.5v5" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+export function IconTruck(props: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.8" {...props}>
+      <path d="M3 6.5h11v9H3zM14 9.5h3.5l3 3v3H14" strokeLinejoin="round" />
+      <circle cx="7" cy="17.5" r="1.8" />
+      <circle cx="17" cy="17.5" r="1.8" />
+    </svg>
+  );
+}
+
+export function IconShield(props: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.8" {...props}>
+      <path d="M12 3.5 19 6v5.5c0 4.3-2.9 7.6-7 9-4.1-1.4-7-4.7-7-9V6Z" strokeLinejoin="round" />
+      <path d="m9 12 2.2 2.2L15.5 10" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+export function IconCar(props: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.8" {...props}>
+      <path d="M4 15.5v-3l2-5a1.5 1.5 0 0 1 1.4-1h9.2a1.5 1.5 0 0 1 1.4 1l2 5v3Z" strokeLinejoin="round" />
+      <path d="M4 15.5v2.5h2.5v-2.5M17.5 15.5v2.5H20v-2.5M4.5 12.5h15" strokeLinejoin="round" />
+      <circle cx="7.5" cy="14" r=".6" fill="currentColor" />
+      <circle cx="16.5" cy="14" r=".6" fill="currentColor" />
+    </svg>
+  );
+}
+
+export function IconBook(props: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.8" {...props}>
+      <path d="M5 4.5h10.5a2 2 0 0 1 2 2V20H7a2 2 0 0 1-2-2Z" strokeLinejoin="round" />
+      <path d="M5 18a2 2 0 0 1 2-2h10.5M9 8.5h5M9 11.5h5" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+export function IconSignature(props: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.8" {...props}>
+      <path d="M3.5 17c2-4 3.5-9 5.5-9 2.5 0-1.5 9 1 9 1.5 0 2-3 3.5-3s1 3 2.5 3 2-1.5 4-1.5" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M3.5 20.5h17" strokeLinecap="round" />
+    </svg>
+  );
+}

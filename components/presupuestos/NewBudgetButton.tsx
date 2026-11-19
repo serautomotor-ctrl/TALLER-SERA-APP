@@ -9,7 +9,7 @@ import { IconPlus, IconTrash } from "@/components/ui/icons";
 import { fmtEUR } from "@/lib/format";
 import { createBudget } from "@/app/presupuestos/actions";
 
-type Vehicle = { id: string; plate: string; clientName: string; clientNif: string; clientAddress: string };
+type Vehicle = { id: string; plate: string; clientName: string; clientNif: string; clientAddress: string; discount?: number };
 type ItemKind = "concepto" | "mano_obra";
 type Item = { id: number; kind: ItemKind; concept: string; qty: number; unitPrice: number; discount: number; vat: number };
 
@@ -42,6 +42,8 @@ export function NewBudgetButton({ vehicles }: { vehicles: Vehicle[] }) {
       setClientName(match.clientName);
       setClientNif(match.clientNif);
       setClientAddress(match.clientAddress);
+      const d = match.discount || 0;
+      if (d) setItems((prev) => prev.map((it) => (it.discount ? it : { ...it, discount: d })));
     }
   };
 

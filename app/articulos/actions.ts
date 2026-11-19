@@ -64,6 +64,7 @@ export async function updateArticle(articleId: string, formData: FormData) {
   const minStock = parseIntSafe(formData.get("minStock"));
   const supplier = String(formData.get("supplier") || "").trim();
   if (!name || !Number.isFinite(price)) return;
+  const supplierRef = supplier ? await prisma.supplier.findFirst({ where: { name: { equals: supplier, mode: "insensitive" } } }) : null;
 
   await prisma.article.update({
     where: { id: articleId },
@@ -73,6 +74,9 @@ export async function updateArticle(articleId: string, formData: FormData) {
       costPrice: Number.isFinite(costPrice) ? costPrice : 0,
       minStock: Number.isFinite(minStock) && minStock >= 0 ? minStock : 0,
       supplier,
+      supplierId: supplierRef?.id ?? null,
+      reference: String(formData.get("reference") || "").trim(),
+      location: String(formData.get("location") || "").trim(),
     },
   });
   refresh();

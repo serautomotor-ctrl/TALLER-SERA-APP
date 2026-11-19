@@ -3,7 +3,7 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import { createSessionToken, verifyPassword, SESSION_COOKIE } from "@/lib/auth";
+import { ADMIN_SESSION, createSessionToken, verifyPassword, SESSION_COOKIE, type SessionUser } from "@/lib/auth";
 
 function safeNext(next: string): string {
   if (next.startsWith("/") && !next.startsWith("//") && !next.startsWith("/login")) return next;
@@ -12,22 +12,34 @@ function safeNext(next: string): string {
 
 export async function login(formData: FormData) {
   const password = String(formData.get("password") || "");
+  const userId = String(formData.get("userId") || "admin");
   const next = safeNext(String(formData.get("next") || ""));
-  const settings = await prisma.settings.findUnique({ where: { id: "singleton" } });
+  const fail = () => redirect(`/login?error=1${next !== "/" ? `&next=${encodeURIComponent(next)}` : ""}`);
 
-  if (!settings || !password || !verifyPassword(password, settings.passwordHash, settings.passwordSalt)) {
-    redirect(`/login?error=1${next !== "/" ? `&next=${encodeURIComponent(next)}` : ""}`);
+  let session: SessionUser | null = null;
+  if (!password) fail();
+
+  if (userId === "admin") {
+    const settings = await prisma.settings.findUnique({ where: { id: "singleton" } });
+    if (settings && verifyPassword(password, settings.passwordHash, settings.passwordSalt)) session = { ...ADMIN_SESSION };
+  } else {
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (user && user.active && verifyPassword(password, user.passwordHash, user.passwordSalt)) {
+      session = { id: user.id, name: user.name, isAdmin: user.isAdmin, permissions: user.permissions, mechanicId: user.mechanicId };
+    }
   }
+  if (!session) fail();
 
-  const session = createSessionToken();
+  const token = createSessionToken(session!);
   const cookieStore = await cookies();
-  cookieStore.set(SESSION_COOKIE, session.value, {
+  cookieStore.set(SESSION_COOKIE, token.value, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
     path: "/",
-    maxAge: session.maxAge,
+    maxAge: token.maxAge,
   });
+  await prisma.auditLog.create({ data: { userName: session!.name, action: "Inicio de sesion" } }).catch(() => null);
 
   redirect(next);
 }

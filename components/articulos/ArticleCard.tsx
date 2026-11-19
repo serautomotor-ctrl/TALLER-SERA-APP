@@ -22,6 +22,8 @@ export type ArticleView = {
   stock: number;
   minStock: number;
   supplier: string;
+  reference?: string;
+  location?: string;
   tracked: boolean;
 };
 
@@ -79,6 +81,8 @@ export function ArticleCard({ article }: { article: ArticleView }) {
             <span style={{ fontFamily: "var(--font-body)", fontSize: 12, color: "var(--color-text-faint)" }}>
               Minimo {article.minStock}
               {article.supplier ? ` · ${article.supplier}` : ""}
+              {article.reference ? ` · Ref. ${article.reference}` : ""}
+              {article.location ? ` · Ubic. ${article.location}` : ""}
             </span>
           </div>
         </div>
@@ -210,6 +214,14 @@ function EditModal({ article, onClose }: { article: ArticleView; onClose: () => 
           </Field>
           <Field label="Proveedor">
             <TextInput name="supplier" defaultValue={article.supplier} />
+          </Field>
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+          <Field label="Referencia">
+            <TextInput name="reference" defaultValue={article.reference || ""} placeholder="Ref. del fabricante" />
+          </Field>
+          <Field label="Ubicacion en almacen">
+            <TextInput name="location" defaultValue={article.location || ""} placeholder="Estanteria B-3" />
           </Field>
         </div>
         <p style={{ margin: 0, fontFamily: "var(--font-body)", fontSize: 12, color: "var(--color-text-faint)" }}>

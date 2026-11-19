@@ -8,8 +8,11 @@ import { Button } from "@/components/ui/Button";
 import { Pill } from "@/components/ui/Pill";
 import { Select, TextInput } from "@/components/ui/inputs";
 import { IconPrint } from "@/components/ui/icons";
+import { SendButtons } from "@/components/ui/SendButtons";
+import { firstName } from "@/lib/contact";
 import { fmtDate, fmtEUR } from "@/lib/format";
-import { markInvoicePaid, markInvoiceUnpaid, setPartialPayment, updateInvoiceNumber } from "@/app/facturas/actions";
+import { addPayment, markInvoicePaid, markInvoiceUnpaid, removePayment, updateInvoiceNumber } from "@/app/facturas/actions";
+import { IconTrash } from "@/components/ui/icons";
 
 type InvoiceItem = { id: string; concept: string; qty: number; unitPrice: number; discount: number; vat: number; kind: string };
 type Invoice = {
@@ -27,6 +30,10 @@ type Invoice = {
   paymentStatus: string;
   paymentMethod: string | null;
   paidAmount: number;
+  claimNumber?: string;
+  notes?: string;
+  insurerName?: string | null;
+  payments: { id: string; amount: number; method: string; date: Date; note: string }[];
   items: InvoiceItem[];
 };
 type Company = {
@@ -47,11 +54,22 @@ const PAYMENT_STATUS: Record<string, { label: string; tone: "success" | "warning
   pendiente: { label: "Pendiente de cobro", tone: "muted" },
 };
 
-export function InvoiceViewModal({ invoice, company }: { invoice: Invoice; company: Company }) {
+export function InvoiceViewModal({
+  invoice,
+  company,
+  contact,
+  sharePath,
+}: {
+  invoice: Invoice;
+  company: Company;
+  contact: { phone: string; email: string };
+  sharePath: string;
+}) {
   const router = useRouter();
   const [dataUrl, setDataUrl] = useState<string | null>(null);
   const [, startTransition] = useTransition();
-  const [partialAmount, setPartialAmount] = useState(String(invoice.total.toFixed(2)));
+  const remaining = Math.max(0, invoice.total - invoice.paidAmount);
+  const [partialAmount, setPartialAmount] = useState(remaining.toFixed(2));
   const [editingNumber, setEditingNumber] = useState(false);
   const [numberValue, setNumberValue] = useState(invoice.number);
   const [numberError, setNumberError] = useState("");
@@ -114,7 +132,7 @@ export function InvoiceViewModal({ invoice, company }: { invoice: Invoice; compa
               <p style="margin:2px 0 0; color:#333;">Fecha: ${fmtDate(invoice.createdAt)}</p>
             </div>
           </div>
-          <p style="margin-top:12px;">Cliente: ${invoice.clientName || "-"} ${invoice.clientNif ? "(" + invoice.clientNif + ")" : ""}${invoice.clientAddress ? "<br/>" + invoice.clientAddress : ""}<br/>Vehiculo: ${invoice.plate}</p>
+          <p style="margin-top:12px;">Cliente: ${invoice.clientName || "-"} ${invoice.clientNif ? "(" + invoice.clientNif + ")" : ""}${invoice.clientAddress ? "<br/>" + invoice.clientAddress : ""}<br/>Vehiculo: ${invoice.plate}${invoice.claimNumber ? `<br/>Siniestro n.º ${invoice.claimNumber}` : ""}${invoice.notes ? `<br/><span style="color:#444">${invoice.notes}</span>` : ""}</p>
           ${conceptRows ? `<p style="margin:14px 0 4px;"><strong>Conceptos</strong></p><table width="100%" style="border-collapse:collapse;">${tableHead}<tbody>${conceptRows}</tbody></table>` : ""}
           ${laborRows ? `<p style="margin:14px 0 4px;"><strong>Mano de obra</strong></p><table width="100%" style="border-collapse:collapse;">${tableHead}<tbody>${laborRows}</tbody></table>` : ""}
           <div style="display:flex; justify-content:flex-end; margin-top:20px;">
@@ -152,6 +170,8 @@ export function InvoiceViewModal({ invoice, company }: { invoice: Invoice; compa
         <p style={{ margin: 0, fontFamily: "var(--font-body)", fontSize: 13, color: "var(--color-text-muted)" }}>
           {invoice.clientName || "Sin cliente"} {invoice.clientNif ? `· ${invoice.clientNif}` : ""} · {invoice.plate}
           {invoice.clientAddress ? <><br />{invoice.clientAddress}</> : null}
+          {invoice.claimNumber ? <><br />Siniestro n.º {invoice.claimNumber}</> : null}
+          {invoice.notes ? <><br />{invoice.notes}</> : null}
         </p>
 
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -225,10 +245,31 @@ export function InvoiceViewModal({ invoice, company }: { invoice: Invoice; compa
             <Pill tone={PAYMENT_STATUS[invoice.paymentStatus]?.tone || "muted"}>{PAYMENT_STATUS[invoice.paymentStatus]?.label}</Pill>
             {invoice.paymentStatus !== "pendiente" && (
               <span style={{ fontFamily: "var(--font-body)", fontSize: 12, color: "var(--color-text-muted)" }}>
-                Cobrado: {fmtEUR(invoice.paidAmount)} {invoice.paymentMethod ? `· ${invoice.paymentMethod}` : ""}
+                Cobrado: {fmtEUR(invoice.paidAmount)}
+                {invoice.paymentStatus === "parcial" ? ` · falta ${fmtEUR(remaining)}` : ""}
               </span>
             )}
           </div>
+          {invoice.payments.length > 0 && (
+            <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+              {invoice.payments.map((p) => (
+                <div key={p.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontFamily: "var(--font-body)", fontSize: 12, color: "var(--color-text-muted)" }}>
+                  <span>
+                    {fmtDate(p.date)} · {p.method} · <strong style={{ color: "var(--color-text-primary)" }}>{fmtEUR(p.amount)}</strong>
+                    {p.note ? ` · ${p.note}` : ""}
+                  </span>
+                  <button
+                    type="button"
+                    title="Anular este cobro"
+                    onClick={() => confirm("¿Anular este cobro?") && startTransition(() => removePayment(p.id))}
+                    style={{ background: "none", border: "none", cursor: "pointer", color: "var(--color-text-faint)" }}
+                  >
+                    <IconTrash />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
           {invoice.paymentStatus === "pendiente" || invoice.paymentStatus === "parcial" ? (
             <>
               <div style={{ display: "flex", gap: 8 }}>
@@ -250,9 +291,9 @@ export function InvoiceViewModal({ invoice, company }: { invoice: Invoice; compa
                 onClick={() => {
                   const select = document.getElementById("payment-method-select") as HTMLSelectElement | null;
                   const fd = new FormData();
-                  fd.set("paidAmount", partialAmount);
+                  fd.set("amount", partialAmount);
                   fd.set("paymentMethod", select?.value || "efectivo");
-                  startTransition(() => setPartialPayment(invoice.id, fd));
+                  startTransition(() => addPayment(invoice.id, fd));
                 }}
               >
                 Registrar cobro
@@ -264,12 +305,12 @@ export function InvoiceViewModal({ invoice, company }: { invoice: Invoice; compa
                 }}
               >
                 <Button type="submit" variant="ghost" style={{ width: "100%" }}>
-                  Marcar cobrada por completo ({fmtEUR(invoice.total)})
+                  Cobrar todo lo que falta ({fmtEUR(remaining)})
                 </Button>
               </form>
             </>
           ) : (
-            <Button type="button" variant="ghost" onClick={() => startTransition(() => markInvoiceUnpaid(invoice.id))}>
+            <Button type="button" variant="ghost" onClick={() => confirm("¿Anular todos los cobros de esta factura?") && startTransition(() => markInvoiceUnpaid(invoice.id))}>
               Deshacer cobro
             </Button>
           )}
@@ -289,6 +330,13 @@ export function InvoiceViewModal({ invoice, company }: { invoice: Invoice; compa
         <Button variant="primary" type="button" onClick={handlePrint}>
           <IconPrint /> Imprimir / descargar
         </Button>
+        <SendButtons
+          phone={contact.phone}
+          email={contact.email}
+          subject={`Factura ${invoice.number} - ${company.workshopName}`}
+          message={`Hola${firstName(invoice.clientName) ? " " + firstName(invoice.clientName) : ""}, te enviamos la factura ${invoice.number} de tu vehiculo ${invoice.plate} por importe de ${fmtEUR(invoice.total)}. Puedes verla y descargarla aqui:`}
+          path={sharePath}
+        />
       </div>
     </Modal>
   );

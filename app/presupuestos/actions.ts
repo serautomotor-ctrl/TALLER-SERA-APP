@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { createInvoice, type ItemInput } from "@/app/facturas/actions";
+import { logAction } from "@/lib/audit";
 
 function nextBudgetNumber(existingNumbers: string[]) {
   const year = new Date().getFullYear();
@@ -64,7 +65,8 @@ export async function createBudget(data: {
 }
 
 export async function removeBudget(id: string) {
-  await prisma.budget.delete({ where: { id } });
+  const b = await prisma.budget.delete({ where: { id } });
+  await logAction("Presupuesto borrado", `${b.number} · ${b.clientName}`);
   revalidatePath("/presupuestos");
 }
 
@@ -93,4 +95,18 @@ export async function convertBudgetToInvoice(budgetId: string): Promise<{ invoic
   revalidatePath("/presupuestos");
   revalidatePath("/facturas");
   return { invoiceId: res.invoiceId };
+}
+
+export async function signBudgetInShop(budgetId: string, signerName: string, dataUrl: string) {
+  if (!dataUrl.startsWith("data:image/")) return;
+  await prisma.budget.update({
+    where: { id: budgetId },
+    data: { signatureUrl: dataUrl, signerName: signerName.trim(), signedAt: new Date(), acceptedOnline: false },
+  });
+  revalidatePath("/presupuestos");
+}
+
+export async function clearBudgetSignature(budgetId: string) {
+  await prisma.budget.update({ where: { id: budgetId }, data: { signatureUrl: "", signerName: "", signedAt: null, acceptedOnline: false } });
+  revalidatePath("/presupuestos");
 }

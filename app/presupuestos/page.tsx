@@ -7,6 +7,7 @@ import { NewBudgetButton } from "@/components/presupuestos/NewBudgetButton";
 import { BudgetViewModal } from "@/components/presupuestos/BudgetViewModal";
 import { fmtDate, fmtEUR } from "@/lib/format";
 import { prisma } from "@/lib/prisma";
+import { sharePath } from "@/lib/share";
 
 export const dynamic = "force-dynamic";
 
@@ -20,6 +21,7 @@ export default async function PresupuestosPage({ searchParams }: { searchParams:
   ]);
 
   const viewBudget = id ? budgets.find((b) => b.id === id) ?? null : null;
+  const viewVehicle = viewBudget ? vehicles.find((v) => v.plate === viewBudget.plate) ?? null : null;
   const totalPresupuestado = budgets.reduce((s, b) => s + Number(b.total), 0);
   const facturados = budgets.filter((b) => b.invoiceId).length;
 
@@ -36,6 +38,7 @@ export default async function PresupuestosPage({ searchParams }: { searchParams:
               clientName: v.customer.name,
               clientNif: v.customer.taxId,
               clientAddress: v.customer.address,
+              discount: v.customer.discount,
             }))}
           />
         }
@@ -75,6 +78,7 @@ export default async function PresupuestosPage({ searchParams }: { searchParams:
                 </p>
               </div>
               <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                {b.signedAt && !b.invoiceId && <Pill tone="success">{b.acceptedOnline ? "Aceptado online" : "Firmado"}</Pill>}
                 {b.invoiceId ? <Pill tone="success">Facturado</Pill> : <Pill tone="muted">Presupuesto</Pill>}
                 <Pill tone="accent">{fmtEUR(Number(b.total))}</Pill>
               </div>
@@ -92,6 +96,8 @@ export default async function PresupuestosPage({ searchParams }: { searchParams:
             total: Number(viewBudget.total),
             items: viewBudget.items.map((it) => ({ ...it, unitPrice: Number(it.unitPrice) })),
           }}
+          contact={{ phone: viewVehicle?.customer.phone || "", email: viewVehicle?.customer.email || "" }}
+          sharePath={sharePath("presupuesto", viewBudget.id)}
           company={{
             workshopName: settings.workshopName,
             taxId: settings.taxId,

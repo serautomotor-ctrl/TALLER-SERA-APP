@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/Button";
-import { Field, TextInput } from "@/components/ui/inputs";
+import { Field, Select, TextInput } from "@/components/ui/inputs";
+import { prisma } from "@/lib/prisma";
 import { login } from "./actions";
 
 export default async function LoginPage({
@@ -8,6 +9,7 @@ export default async function LoginPage({
   searchParams: Promise<{ error?: string; next?: string }>;
 }) {
   const { error, next } = await searchParams;
+  const users = await prisma.user.findMany({ where: { active: true }, orderBy: { name: "asc" }, select: { id: true, name: true } }).catch(() => []);
 
   return (
     <div
@@ -67,6 +69,18 @@ export default async function LoginPage({
         </div>
 
         {next && <input type="hidden" name="next" value={next} />}
+        {users.length > 0 && (
+          <Field label="Usuario">
+            <Select name="userId" defaultValue={users[0].id} style={{ width: "100%" }}>
+              {users.map((u) => (
+                <option key={u.id} value={u.id}>
+                  {u.name}
+                </option>
+              ))}
+              <option value="admin">Administrador (contrasena del taller)</option>
+            </Select>
+          </Field>
+        )}
         <Field label="Contrasena de acceso">
           <TextInput type="password" name="password" placeholder="••••••••" autoFocus required style={{ width: "100%" }} />
         </Field>

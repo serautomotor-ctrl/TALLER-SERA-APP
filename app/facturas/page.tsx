@@ -8,6 +8,7 @@ import { InvoiceViewModal } from "@/components/facturas/InvoiceViewModal";
 import { ExportCsvButton } from "@/components/facturas/ExportCsvButton";
 import { fmtDate, fmtEUR } from "@/lib/format";
 import { prisma } from "@/lib/prisma";
+import { sharePath } from "@/lib/share";
 
 export const dynamic = "force-dynamic";
 
@@ -21,12 +22,14 @@ export default async function FacturasPage({ searchParams }: { searchParams: Pro
   const { id } = await searchParams;
 
   const [invoices, vehicles, settings] = await Promise.all([
-    prisma.invoice.findMany({ orderBy: { createdAt: "desc" }, include: { items: true } }),
+    prisma.invoice.findMany({ orderBy: { createdAt: "desc" }, include: { items: true, payments: { orderBy: { date: "asc" } }, insurer: true } }),
     prisma.vehicle.findMany({ orderBy: { plate: "asc" }, include: { customer: true } }),
     prisma.settings.findUniqueOrThrow({ where: { id: "singleton" } }),
   ]);
+  const insurers = await prisma.insurer.findMany({ orderBy: { name: "asc" }, select: { id: true, name: true } });
 
   const viewInvoice = id ? invoices.find((i) => i.id === id) ?? null : null;
+  const viewVehicle = viewInvoice ? vehicles.find((v) => v.plate === viewInvoice.plate) ?? null : null;
   const totalFacturado = invoices.reduce((s, i) => s + Number(i.total), 0);
   const totalPendienteFacturas = invoices.reduce(
     (s, i) => s + (i.paymentStatus === "cobrada" ? 0 : Number(i.total) - Number(i.paidAmount)),
@@ -62,7 +65,9 @@ export default async function FacturasPage({ searchParams }: { searchParams: Pro
                 clientName: v.customer.name,
                 clientNif: v.customer.taxId,
                 clientAddress: v.customer.address,
+                discount: v.customer.discount,
               }))}
+              insurers={insurers}
             />
           </div>
         }
@@ -103,6 +108,7 @@ export default async function FacturasPage({ searchParams }: { searchParams: Pro
                 </p>
               </div>
               <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                {inv.insurer && <Pill tone="steel">{inv.insurer.name}</Pill>}
                 <Pill tone={PAYMENT_STATUS[inv.paymentStatus]?.tone || "muted"}>{PAYMENT_STATUS[inv.paymentStatus]?.label}</Pill>
                 <Pill tone="success">{fmtEUR(Number(inv.total))}</Pill>
               </div>
@@ -119,8 +125,12 @@ export default async function FacturasPage({ searchParams }: { searchParams: Pro
             vatTotal: Number(viewInvoice.vatTotal),
             total: Number(viewInvoice.total),
             paidAmount: Number(viewInvoice.paidAmount),
+            payments: viewInvoice.payments.map((p) => ({ ...p, amount: Number(p.amount) })),
+            insurerName: viewInvoice.insurer?.name ?? null,
             items: viewInvoice.items.map((it) => ({ ...it, unitPrice: Number(it.unitPrice) })),
           }}
+          contact={{ phone: viewVehicle?.customer.phone || "", email: viewVehicle?.customer.email || "" }}
+          sharePath={sharePath("factura", viewInvoice.id)}
           company={{
             workshopName: settings.workshopName,
             taxId: settings.taxId,

@@ -94,3 +94,17 @@ export async function setBudgetStatus(receptionId: string, status: $Enums.Budget
   });
   revalidatePath("/recepcion");
 }
+
+export async function saveReceptionSignature(receptionId: string, signerName: string, dataUrl: string) {
+  if (!dataUrl.startsWith("data:image/")) return;
+  await prisma.reception.update({
+    where: { id: receptionId },
+    data: { signatureUrl: dataUrl, signerName: signerName.trim(), signedAt: new Date() },
+  });
+  revalidatePath("/recepcion");
+}
+
+export async function clearReceptionSignature(receptionId: string) {
+  await prisma.reception.update({ where: { id: receptionId }, data: { signatureUrl: "", signerName: "", signedAt: null } });
+  revalidatePath("/recepcion");
+}

@@ -65,13 +65,23 @@ export async function updateCustomer(customerId: string, formData: FormData) {
       email: String(formData.get("email") || "").trim(),
       address: String(formData.get("address") || "").trim(),
       taxId: String(formData.get("taxId") || "").trim(),
+      discount: Math.min(100, Math.max(0, parseInt(String(formData.get("discount") || "0"), 10) || 0)),
+      notes: String(formData.get("notes") || "").trim(),
     },
   });
   revalidatePath("/fichas");
 }
 
+function parseDateField(v: FormDataEntryValue | null) {
+  const s = String(v || "").trim();
+  if (!s) return null;
+  const d = new Date(`${s}T12:00:00`);
+  return Number.isNaN(d.getTime()) ? null : d;
+}
+
 export async function updateVehicle(vehicleId: string, formData: FormData) {
   const mileage = parseInt(String(formData.get("mileage") || ""), 10);
+  const nextServiceKm = parseInt(String(formData.get("nextServiceKm") || ""), 10);
   await prisma.vehicle.update({
     where: { id: vehicleId },
     data: {
@@ -79,9 +89,14 @@ export async function updateVehicle(vehicleId: string, formData: FormData) {
       model: String(formData.get("model") || "").trim(),
       vin: String(formData.get("vin") || "").trim(),
       mileage: Number.isFinite(mileage) ? mileage : null,
+      itvDate: parseDateField(formData.get("itvDate")),
+      nextServiceDate: parseDateField(formData.get("nextServiceDate")),
+      nextServiceKm: Number.isFinite(nextServiceKm) ? nextServiceKm : null,
+      reminderNote: String(formData.get("reminderNote") || "").trim(),
     },
   });
   revalidatePath("/fichas");
+  revalidatePath("/avisos");
 }
 
 export async function addHistory(vehicleId: string, formData: FormData) {

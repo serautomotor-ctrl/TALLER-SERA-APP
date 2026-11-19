@@ -2,12 +2,15 @@
 
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
+import { getSessionUser } from "@/lib/session";
 
 export async function startEntry(formData: FormData) {
   const task = String(formData.get("task") || "").trim() || "Tarea general";
   const plate = String(formData.get("plate") || "").trim().toUpperCase();
+  const user = await getSessionUser();
+  const mechanicId = String(formData.get("mechanicId") || "") || user?.mechanicId || null;
 
-  await prisma.timeEntry.create({ data: { task, plate } });
+  await prisma.timeEntry.create({ data: { task, plate, mechanicId } });
   revalidatePath("/horario");
   revalidatePath("/");
 }
