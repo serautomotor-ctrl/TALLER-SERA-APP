@@ -13,6 +13,7 @@ export const SECTIONS = [
   { key: "taller", label: "Planificador del taller", paths: ["/taller"], group: "Taller" },
   { key: "articulos", label: "Articulos y stock", paths: ["/articulos"], group: "Taller" },
   { key: "cortesia", label: "Vehiculos de cortesia", paths: ["/cortesia"], group: "Taller" },
+  { key: "placas", label: "Placas de matricula", paths: ["/placas"], group: "Taller" },
   { key: "diagnostico", label: "Diagnostico con IA", paths: ["/diagnostico"], group: "Taller" },
   { key: "presupuestos", label: "Presupuestos", paths: ["/presupuestos"], group: "Oficina" },
   { key: "facturas", label: "Facturas", paths: ["/facturas"], group: "Oficina" },
@@ -29,7 +30,7 @@ export const SECTIONS = [
 export type SectionKey = (typeof SECTIONS)[number]["key"];
 
 /** Permisos de partida al crear un usuario mecanico */
-export const MECHANIC_DEFAULT: SectionKey[] = ["horario", "fichas", "agenda", "recepcion", "ordenes", "taller", "articulos", "cortesia", "diagnostico"];
+export const MECHANIC_DEFAULT: SectionKey[] = ["horario", "fichas", "agenda", "recepcion", "ordenes", "taller", "articulos", "cortesia", "placas", "diagnostico"];
 
 type UserLike = { isAdmin: boolean; permissions: string[] };
 

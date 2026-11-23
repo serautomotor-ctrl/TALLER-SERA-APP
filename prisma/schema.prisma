@@ -37,6 +37,7 @@ model Settings {
   aboutText                 String   @default("")
   passwordHash              String
   passwordSalt              String
+  plateConfig               Json?
 }
 
 model Customer {
@@ -647,4 +648,20 @@ model AuditLog {
   detail   String   @default("")
 
   @@index([at])
+}
+
+// ---------- Placas de matricula ----------
+
+model PlateJob {
+  id          String   @id @default(cuid())
+  plate       String
+  qty         Int      @default(2)
+  holderName  String   @default("")
+  holderTaxId String   @default("")
+  notes       String   @default("")
+  userName    String   @default("")
+  createdAt   DateTime @default(now())
+
+  @@index([plate])
+  @@index([createdAt])
 }

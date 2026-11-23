@@ -7,6 +7,7 @@ import { Field, TextInput } from "@/components/ui/inputs";
 import { IconPlus, IconTrash } from "@/components/ui/icons";
 import { fmtDate, fmtEUR } from "@/lib/format";
 import { toDateKey } from "@/lib/time";
+import { QuickPlateButton } from "@/components/placas/QuickPlateButton";
 import {
   addHistory,
   addPendingPayment,
@@ -46,7 +47,13 @@ export function FichaDetalle({ vehicle }: { vehicle: VehicleWithRelations }) {
               </p>
             )}
           </div>
-          <Pill tone={pending > 0 ? "warning" : "success"}>{pending > 0 ? `Pendiente: ${fmtEUR(pending)}` : "Al dia"}</Pill>
+          <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+            <QuickPlateButton plate={vehicle.plate} holderName={vehicle.customer.name} holderTaxId={vehicle.customer.taxId} />
+            <Link href={`/placas?m=${encodeURIComponent(vehicle.plate)}`}>
+              <Pill tone="steel">Placas (otras opciones)</Pill>
+            </Link>
+            <Pill tone={pending > 0 ? "warning" : "success"}>{pending > 0 ? `Pendiente: ${fmtEUR(pending)}` : "Al dia"}</Pill>
+          </div>
         </div>
 
         {otherVehicles.length > 0 && (
