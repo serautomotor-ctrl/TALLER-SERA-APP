@@ -7,7 +7,7 @@ export class AnthropicNotConfiguredError extends Error {
   }
 }
 
-export async function askAnthropic(apiKey: string, systemPrompt: string, userMessage: string): Promise<string> {
+export async function askAnthropic(apiKey: string, systemPrompt: string, userMessage: string, model: string = MODEL): Promise<string> {
   if (!apiKey) throw new AnthropicNotConfiguredError();
 
   const res = await fetch(ANTHROPIC_API_URL, {
@@ -18,7 +18,7 @@ export async function askAnthropic(apiKey: string, systemPrompt: string, userMes
       "anthropic-version": "2023-06-01",
     },
     body: JSON.stringify({
-      model: MODEL,
+      model,
       max_tokens: 1024,
       system: systemPrompt,
       messages: [{ role: "user", content: userMessage }],

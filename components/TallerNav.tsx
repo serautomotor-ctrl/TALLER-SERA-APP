@@ -7,6 +7,7 @@ import { logout } from "@/app/login/actions";
 import { canAccess, type SectionKey } from "@/lib/permissions";
 import { IconBoard, IconCalendar, IconCard, IconClipboard, IconClock, IconHome, IconInvoice, IconLogout, IconQr, IconWrench } from "./ui/icons";
 import { NAV_ICONS } from "./navIcons";
+import { VoiceButton } from "./voz/VoiceButton";
 
 type NavUser = { name: string; isAdmin: boolean; permissions: string[] } | null;
 
@@ -75,6 +76,8 @@ export function TallerNav({ children, user }: { children: ReactNode; user: NavUs
       </div>
 
       <div style={{ flex: 1, padding: "22px 24px", minWidth: 0, overflowY: "auto" }}>{children}</div>
+
+      {(!user || canAccess(user, "ordenes")) && <VoiceButton />}
 
       <div
         className="no-print"
