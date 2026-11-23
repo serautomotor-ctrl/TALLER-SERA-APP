@@ -34,10 +34,11 @@ const INTENT_LABEL: Record<string, string> = {
   note: "Anotar en observaciones",
   status: "Cambiar el estado",
   timer_start: "Empezar el tiempo",
-  timer_stop: "Parar el tiempo",
+  timer_stop: "Terminar el tiempo",
+  timer_pause: "Pausar el tiempo",
+  timer_resume: "Reanudar el tiempo",
   new_order: "Abrir una orden nueva",
 };
-const STATUS_LABEL: Record<string, string> = { abierta: "Abierta", en_progreso: "En curso", pendiente_piezas: "Esperando piezas", cerrada: "Terminada" };
 
 export function VoiceButton() {
   const router = useRouter();
@@ -87,9 +88,25 @@ export function VoiceButton() {
     setPhase("thinking");
     setResult(null);
     try {
-      const p = await interpretVoice(text, plate);
-      setProposal(p);
+      const now = new Date();
+      const todayKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+      const p = await interpretVoice(text, plate, todayKey);
       if (p.plate) rememberPlate(p.plate);
+      // "Ir a": abrimos la pantalla directamente
+      if (p.navigateTo && !p.error) {
+        setResult({ ok: true, message: p.answer || "Abriendo..." });
+        setPhase("done");
+        router.push(p.navigateTo);
+        setTimeout(() => setOpen(false), 700);
+        return;
+      }
+      // Preguntas: se contesta y ya
+      if (p.answer && !p.error) {
+        setResult({ ok: true, message: p.answer });
+        setPhase("done");
+        return;
+      }
+      setProposal(p);
       setQty(p.qty || 1);
       setChoice(p.candidates[0]?.id || (p.intent === "add_item" ? "libre" : ""));
       setFreeName(p.text);
@@ -188,18 +205,13 @@ export function VoiceButton() {
   const stopListening = () => recRef.current?.stop();
 
   const confirm = async () => {
-    if (!proposal?.intent || !proposal.plate) return;
+    if (!proposal?.intent) return;
     setPhase("thinking");
-    const res = await executeVoice({
-      intent: proposal.intent,
-      plate: proposal.plate,
-      orderId: proposal.orderId,
+    const res = await executeVoice(proposal, {
       qty,
       articleId: choice && choice !== "libre" ? choice : null,
       freeName,
       freePrice: parseFloat(freePrice.replace(",", ".")) || 0,
-      text: proposal.text,
-      status: proposal.status,
     });
     setResult(res);
     setPhase("done");
@@ -263,9 +275,17 @@ export function VoiceButton() {
                 </p>
                 {heard && <p style={{ fontFamily: "var(--font-body)", fontSize: 16, margin: "8px 0 0", color: "var(--color-text-primary)" }}>«{heard}»</p>}
                 <p style={{ ...small, marginTop: 12, textAlign: "left" }}>
-                  Ejemplos: «1234 BCD apuntale un limpiador de frenos» · «ponle dos litros de aceite» · «anota que hace ruido la rueda» · «pasala a esperando piezas» ·
-                  «empieza el tiempo» · «abre una orden para 5678 KLM cambio de aceite».
+                  Algunas cosas que puedes decir:
                 </p>
+                <ul style={{ ...small, textAlign: "left", margin: "4px 0 0", paddingLeft: 18, lineHeight: 1.6 }}>
+                  <li>«1234 BCD apuntale un limpiador de frenos» · «anota que hace ruido la rueda»</li>
+                  <li>«empieza / pausa / reanuda / termina el tiempo» · «pasala a esperando piezas»</li>
+                  <li>«asignasela a Juan» · «prometela para el viernes» · «abre una orden para 5678 KLM cambio de aceite»</li>
+                  <li>«hallazgo pastillas gastadas 80 euros» · «tiene 125000 km» · «la ITV le caduca el 15 de marzo»</li>
+                  <li>«ficho la entrada» · «me voy» · «cita manana a las 10 para 1234 BCD revision»</li>
+                  <li>«cobra la factura de la 1234 con tarjeta» · «salida de caja 20 euros gasolina» · «han llegado 10 filtros»</li>
+                  <li>«abre facturas» · «cuantos filtros quedan» · «como va la 1234» · «cuanto hemos cobrado hoy»</li>
+                </ul>
               </div>
             )}
 
@@ -278,10 +298,14 @@ export function VoiceButton() {
                   <div style={{ ...box, borderColor: "var(--color-warning)", color: "var(--color-warning)" }}>{proposal.error}</div>
                 ) : (
                   <div style={box}>
-                    <div style={{ fontFamily: "var(--font-body)", fontWeight: 700, fontSize: 15 }}>{INTENT_LABEL[proposal.intent || ""]}</div>
-                    <div style={{ ...small, marginTop: 2 }}>{proposal.orderLabel || proposal.plate}</div>
+                    <div style={{ fontFamily: "var(--font-body)", fontWeight: 700, fontSize: 15 }}>{proposal.summary[0] || INTENT_LABEL[proposal.intent || ""]}</div>
+                    {proposal.summary.slice(1).map((line, i) => (
+                      <div key={i} style={{ ...small, marginTop: 3, color: i === 0 ? "var(--color-text-muted)" : "var(--color-text-primary)", fontSize: i === 0 ? 12.5 : 14 }}>
+                        {line}
+                      </div>
+                    ))}
 
-                    {proposal.intent === "add_item" && (
+                    {(proposal.intent === "add_item" || proposal.intent === "stock_in") && (
                       <div style={{ marginTop: 10, display: "flex", flexDirection: "column", gap: 6 }}>
                         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                           <span style={small}>Cantidad</span>
@@ -302,24 +326,19 @@ export function VoiceButton() {
                             </span>
                           </label>
                         ))}
-                        <label style={option(choice === "libre")}>
-                          <input type="radio" name="voz-art" checked={choice === "libre"} onChange={() => setChoice("libre")} />
-                          <span style={{ flex: 1 }}>{proposal.candidates.length ? "Otro, que no esta en el catalogo" : "No esta en el catalogo: apuntarlo igual"}</span>
-                        </label>
-                        {choice === "libre" && (
+                        {proposal.intent === "add_item" && (
+                          <label style={option(choice === "libre")}>
+                            <input type="radio" name="voz-art" checked={choice === "libre"} onChange={() => setChoice("libre")} />
+                            <span style={{ flex: 1 }}>{proposal.candidates.length ? "Otro, que no esta en el catalogo" : "No esta en el catalogo: apuntarlo igual"}</span>
+                          </label>
+                        )}
+                        {proposal.intent === "add_item" && choice === "libre" && (
                           <div style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) 90px", gap: 6 }}>
                             <input value={freeName} onChange={(e) => setFreeName(e.target.value)} style={input} />
                             <input value={freePrice} onChange={(e) => setFreePrice(e.target.value)} placeholder="Precio" inputMode="decimal" style={input} />
                           </div>
                         )}
                       </div>
-                    )}
-                    {proposal.intent === "note" && <p style={{ margin: "8px 0 0", fontFamily: "var(--font-body)", fontSize: 14 }}>«{proposal.text}»</p>}
-                    {proposal.intent === "status" && proposal.status && (
-                      <p style={{ margin: "8px 0 0", fontFamily: "var(--font-body)", fontSize: 14 }}>Nuevo estado: {STATUS_LABEL[proposal.status]}</p>
-                    )}
-                    {proposal.intent === "new_order" && (
-                      <p style={{ margin: "8px 0 0", fontFamily: "var(--font-body)", fontSize: 14 }}>Trabajo: {proposal.text || "(sin descripcion)"}</p>
                     )}
                   </div>
                 )}
