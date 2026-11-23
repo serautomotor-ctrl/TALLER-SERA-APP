@@ -43,11 +43,22 @@ function IconPlate(props: SVGProps<SVGSVGElement>) {
   );
 }
 
+function IconVehicleDoc(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.8" {...props}>
+      <path d="M6 3.5h8l4 4V20.5H6z" strokeLinejoin="round" />
+      <path d="M14 3.5v4h4" strokeLinejoin="round" />
+      <path d="M8.5 15.5l1-2.5h5l1 2.5v2h-7z" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
 /** Icono de cada seccion (claves de lib/permissions) */
 export const NAV_ICONS = {
   menu: IconMenu,
   horario: IconClock,
   fichas: IconCard,
+  vehiculos: IconVehicleDoc,
   agenda: IconCalendar,
   avisos: IconBell,
   recepcion: IconClipboard,

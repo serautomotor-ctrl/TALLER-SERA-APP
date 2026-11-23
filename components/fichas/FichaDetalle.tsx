@@ -48,6 +48,9 @@ export function FichaDetalle({ vehicle }: { vehicle: VehicleWithRelations }) {
             )}
           </div>
           <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+            <Link href={`/vehiculos?id=${vehicle.id}`}>
+              <Pill tone="steel">Ficha tecnica</Pill>
+            </Link>
             <QuickPlateButton plate={vehicle.plate} holderName={vehicle.customer.name} holderTaxId={vehicle.customer.taxId} />
             <Link href={`/placas?m=${encodeURIComponent(vehicle.plate)}`}>
               <Pill tone="steel">Placas (otras opciones)</Pill>

@@ -54,23 +54,28 @@ model Customer {
 }
 
 model Vehicle {
-  id              String         @id @default(cuid())
-  plate           String         @unique
-  brand           String         @default("")
-  model           String         @default("")
-  vin             String         @default("")
-  mileage         Int?
-  customer        Customer       @relation(fields: [customerId], references: [id])
-  customerId      String
-  pendingPayments Decimal        @default(0) @db.Decimal(10, 2)
-  createdAt       DateTime       @default(now())
-  history         HistoryEntry[]
-  warranties      Warranty[]
-  itvDate         DateTime?
-  nextServiceDate DateTime?
-  nextServiceKm   Int?
-  reminderNote    String         @default("")
-  lastReminderAt  DateTime?
+  id                String            @id @default(cuid())
+  plate             String            @unique
+  brand             String            @default("")
+  model             String            @default("")
+  vin               String            @default("")
+  mileage           Int?
+  customer          Customer          @relation(fields: [customerId], references: [id])
+  customerId        String
+  pendingPayments   Decimal           @default(0) @db.Decimal(10, 2)
+  createdAt         DateTime          @default(now())
+  history           HistoryEntry[]
+  warranties        Warranty[]
+  itvDate           DateTime?
+  nextServiceDate   DateTime?
+  nextServiceKm     Int?
+  reminderNote      String            @default("")
+  lastReminderAt    DateTime?
+  firstRegistration DateTime?
+  fuel              String            @default("")
+  color             String            @default("")
+  notes             String            @default("")
+  documents         VehicleDocument[]
 }
 
 model HistoryEntry {
@@ -664,4 +669,20 @@ model PlateJob {
 
   @@index([plate])
   @@index([createdAt])
+}
+
+// ---------- Vehiculos: documentacion (ficha tecnica, permiso...) ----------
+
+model VehicleDocument {
+  id        String   @id @default(cuid())
+  vehicle   Vehicle  @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  vehicleId String
+  kind      String   @default("Ficha tecnica")
+  name      String   @default("")
+  mime      String
+  size      Int      @default(0)
+  data      Bytes
+  createdAt DateTime @default(now())
+
+  @@index([vehicleId])
 }
