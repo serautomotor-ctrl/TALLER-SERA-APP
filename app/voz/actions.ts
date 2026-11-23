@@ -80,9 +80,13 @@ export async function interpretVoice(heard: string, lastPlate: string | null): P
 
   // Las matriculas pueden estar guardadas con espacios o guiones ("9368 MND"): comparamos sin ellos
   const digits = plate.replace(/\D/g, "").slice(0, 4);
-  const sameOrders = (
-    await prisma.order.findMany({ where: digits ? { plate: { contains: digits } } : undefined, orderBy: { createdAt: "desc" } })
-  ).filter((o) => plateKey(o.plate) === plateKey(plate));
+  const withDigits = await prisma.order.findMany({ where: digits ? { plate: { contains: digits } } : undefined, orderBy: { createdAt: "desc" } });
+  let sameOrders = withDigits.filter((o) => plateKey(o.plate) === plateKey(plate));
+  // Si el dictado entendio mal las letras pero las cifras coinciden con una sola orden abierta, es esa
+  if (!sameOrders.length && digits.length === 4) {
+    const openPlates = [...new Set(withDigits.filter((o) => o.status !== "cerrada").map((o) => plateKey(o.plate)))];
+    if (openPlates.length === 1) sameOrders = withDigits.filter((o) => plateKey(o.plate) === openPlates[0]);
+  }
   const order = sameOrders.find((o) => o.status !== "cerrada") || null;
   const anyOrder = order || (parsed.intent === "status" ? sameOrders[0] || null : null);
   if (anyOrder) base.plate = anyOrder.plate;

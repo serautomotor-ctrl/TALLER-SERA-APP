@@ -55,6 +55,9 @@ export function VoiceButton() {
   const [supported, setSupported] = useState(true);
   const recRef = useRef<SR | null>(null);
   const finalRef = useRef("");
+  const pendingRef = useRef("");
+  const errorRef = useRef("");
+  const silenceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     // Cosas que solo existen en el navegador: si hay microfono y la ultima matricula usada
@@ -106,39 +109,80 @@ export function VoiceButton() {
     }
     recRef.current = rec;
     finalRef.current = "";
+    errorRef.current = "";
     setHeard("");
     setProposal(null);
     setResult(null);
     rec.lang = "es-ES";
     rec.interimResults = true;
-    rec.continuous = false;
+    // Seguimos escuchando aunque hagas pausas (matricula... pausa... "apuntale...").
+    // Paramos solos tras 2,5 s de silencio desde lo ultimo que se ha oido.
+    rec.continuous = true;
     rec.maxAlternatives = 1;
+
+    const armSilence = (ms: number) => {
+      if (silenceRef.current) clearTimeout(silenceRef.current);
+      silenceRef.current = setTimeout(() => rec.stop(), ms);
+    };
+    armSilence(8000); // si no dices nada en 8 s, se para
+
     rec.onresult = (e) => {
+      // Reconstruimos todo el texto cada vez. En Android cada trozo suele repetir el anterior
+      // ("9368", "9368 MND", "9368 MND apuntale..."): nos quedamos con el mas largo.
+      const parts: string[] = [];
       let interim = "";
-      for (let i = e.resultIndex; i < e.results.length; i++) {
+      for (let i = 0; i < e.results.length; i++) {
         const r = e.results[i];
-        if (r.isFinal) finalRef.current += r[0].transcript + " ";
-        else interim += r[0].transcript;
+        const t = r[0].transcript.trim();
+        if (!t) continue;
+        if (r.isFinal) {
+          const prev = parts[parts.length - 1];
+          if (prev && t.toLowerCase().startsWith(prev.toLowerCase())) parts[parts.length - 1] = t;
+          else if (!prev || !prev.toLowerCase().includes(t.toLowerCase())) parts.push(t);
+        } else interim = t;
       }
-      setHeard((finalRef.current + interim).trim());
+      let finalText = parts.join(" ");
+      if (interim && finalText && interim.toLowerCase().startsWith(finalText.toLowerCase())) {
+        finalText = "";
+      }
+      finalRef.current = parts.join(" ");
+      setHeard([finalText, interim].filter(Boolean).join(" ").trim());
+      // Guardamos tambien lo provisional por si el navegador corta sin dar el resultado final
+      pendingRef.current = interim;
+      armSilence(2500);
     };
     rec.onerror = (e) => {
-      if (e.error === "not-allowed" || e.error === "service-not-allowed") {
-        setResult({
-          ok: false,
-          message:
-            "Este navegador no deja usar el microfono. Abre el programa en Chrome o Edge (o en el movil), pulsa el icono que hay a la izquierda de la direccion, entra en Microfono y elige Permitir. Mientras tanto puedes escribir la frase abajo.",
-        });
+      const msg: Record<string, string> = {
+        "not-allowed":
+          "Este navegador no deja usar el microfono. Abre el programa en Chrome o Edge (o en el movil), pulsa el icono que hay a la izquierda de la direccion, entra en Microfono y elige Permitir. Mientras tanto puedes escribir la frase abajo.",
+        "service-not-allowed": "Este navegador no permite el dictado. Prueba en Chrome o Edge, o escribe la frase abajo.",
+        "audio-capture": "No encuentro ningun microfono. Comprueba que esta conectado y que ninguna otra aplicacion lo esta usando.",
+        network: "El dictado necesita internet (el navegador convierte la voz en texto en sus servidores). Revisa la conexion.",
+        "no-speech": "No te he oido. Pulsa el microfono y habla cerca del movil, sin esperar mucho.",
+        "language-not-supported": "Este navegador no tiene dictado en espanol. Prueba con Chrome.",
+      };
+      if (e.error === "aborted") return;
+      errorRef.current = msg[e.error] || `El dictado ha fallado (${e.error}). Prueba otra vez o escribe la frase.`;
+    };
+    rec.onend = () => {
+      if (silenceRef.current) clearTimeout(silenceRef.current);
+      const text = (finalRef.current || pendingRef.current).trim();
+      pendingRef.current = "";
+      if (text) {
+        setHeard(text);
+        interpret(text);
+      } else {
+        setResult({ ok: false, message: errorRef.current || "No te he oido. Pulsa el microfono y vuelve a decirlo un poco mas alto." });
         setPhase("done");
       }
     };
-    rec.onend = () => {
-      const text = finalRef.current.trim();
-      if (text) interpret(text);
-      else setPhase((ph) => (ph === "listening" ? "idle" : ph));
-    };
     setPhase("listening");
-    rec.start();
+    try {
+      rec.start();
+    } catch {
+      setResult({ ok: false, message: "No se pudo encender el microfono. Cierra esta ventana y vuelve a intentarlo." });
+      setPhase("done");
+    }
   };
 
   const stopListening = () => recRef.current?.stop();
@@ -214,7 +258,7 @@ export function VoiceButton() {
                   {!supported
                     ? "Este navegador no tiene dictado por voz (funciona en Chrome, Edge y Safari). Puedes escribirlo abajo."
                     : phase === "listening"
-                      ? "Te escucho... (pulsa para terminar)"
+                      ? "Te escucho... di la matricula y lo que hay que hacer. Cuando acabes, pulsa o espera un momento."
                       : "Pulsa y habla"}
                 </p>
                 {heard && <p style={{ fontFamily: "var(--font-body)", fontSize: 16, margin: "8px 0 0", color: "var(--color-text-primary)" }}>«{heard}»</p>}
@@ -294,6 +338,7 @@ export function VoiceButton() {
 
             {phase === "done" && result && (
               <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                {heard && <p style={{ ...small, margin: 0 }}>He oido: «{heard}»</p>}
                 <div style={{ ...box, borderColor: result.ok ? "var(--color-success)" : "var(--color-danger)", color: result.ok ? "var(--color-success)" : "var(--color-danger)", fontWeight: 600 }}>
                   {result.message}
                 </div>

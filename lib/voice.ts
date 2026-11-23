@@ -41,9 +41,93 @@ const LETTERS: Record<string, string> = {
 };
 const QTY: Record<string, number> = { un: 1, una: 1, uno: 1, dos: 2, tres: 3, cuatro: 4, cinco: 5, seis: 6, siete: 7, ocho: 8, nueve: 9, diez: 10, medio: 1, media: 1 };
 
+// ---- Numeros dichos con palabras: "nueve mil trescientos sesenta y ocho", "noventa y tres sesenta y ocho" ----
+const UNITS: Record<string, number> = { cero: 0, uno: 1, dos: 2, tres: 3, cuatro: 4, cinco: 5, seis: 6, siete: 7, ocho: 8, nueve: 9 };
+const TEENS: Record<string, number> = {
+  diez: 10, once: 11, doce: 12, trece: 13, catorce: 14, quince: 15, dieciseis: 16, diecisiete: 17, dieciocho: 18, diecinueve: 19,
+  veinte: 20, veintiuno: 21, veintiun: 21, veintidos: 22, veintitres: 23, veinticuatro: 24, veinticinco: 25, veintiseis: 26, veintisiete: 27, veintiocho: 28, veintinueve: 29,
+};
+const TENS: Record<string, number> = { treinta: 30, cuarenta: 40, cincuenta: 50, sesenta: 60, setenta: 70, ochenta: 80, noventa: 90 };
+const HUNDREDS: Record<string, number> = {
+  cien: 100, ciento: 100, doscientos: 200, doscientas: 200, trescientos: 300, trescientas: 300, cuatrocientos: 400, cuatrocientas: 400, quinientos: 500, quinientas: 500,
+  seiscientos: 600, seiscientas: 600, setecientos: 700, setecientas: 700, ochocientos: 800, ochocientas: 800, novecientos: 900, novecientas: 900,
+};
+
+/** Clase de cada palabra: 1 unidades, 2 decenas, 3 centenas, 4 mil */
+function numClass(w: string) {
+  if (w in UNITS) return 1;
+  if (w in TEENS) return 2;
+  if (w in TENS) return 2;
+  if (w in HUNDREDS) return 3;
+  if (w === "mil") return 4;
+  return 0;
+}
+
+/**
+ * Cambia los numeros dichos con palabras por cifras. Cada grupo que no puede seguir
+ * (p. ej. "noventa" despues de "sesenta y ocho") empieza un numero nuevo.
+ * No toca "un"/"una" para no romper "un filtro".
+ */
+export function wordsToDigits(text: string) {
+  const tokens = text.split(" ");
+  const out: string[] = [];
+  let i = 0;
+  while (i < tokens.length) {
+    if (!numClass(tokens[i])) {
+      out.push(tokens[i]);
+      i++;
+      continue;
+    }
+    let total = 0;
+    let cur = 0;
+    let last = 9; // clase de la ultima palabra del grupo
+    let tensOpen = false; // acabamos de decir una decena tipo "noventa" y puede venir "y tres"
+    let used = 0;
+    while (i < tokens.length) {
+      const w = tokens[i];
+      if (w === "y" && tensOpen && i + 1 < tokens.length && tokens[i + 1] in UNITS) {
+        cur += UNITS[tokens[i + 1]];
+        i += 2;
+        used += 2;
+        tensOpen = false;
+        last = 1;
+        continue;
+      }
+      const c = numClass(w);
+      if (!c) break;
+      if (w === "mil") {
+        if (last <= 3 || used === 0) {
+          total += (cur || 1) * 1000;
+          cur = 0;
+          last = 4;
+          tensOpen = false;
+          i++;
+          used++;
+          continue;
+        }
+        break;
+      }
+      // Una palabra del mismo orden o mayor que la anterior empieza otro numero ("nueve tres", "sesenta noventa")
+      if (used > 0 && c >= last && last !== 4) break;
+      if (w in UNITS) cur += UNITS[w];
+      else if (w in TEENS) cur += TEENS[w];
+      else if (w in TENS) {
+        cur += TENS[w];
+        tensOpen = true;
+      } else if (w in HUNDREDS) cur += HUNDREDS[w];
+      last = c;
+      i++;
+      used++;
+      if (!(w in TENS)) tensOpen = false;
+    }
+    out.push(String(total + cur));
+  }
+  return out.join(" ");
+}
+
 /** Busca una matricula en el texto. Devuelve la matricula, el resto del texto sin ella y los digitos sueltos. */
 export function extractPlate(text: string): { plate: string | null; digits: string | null; rest: string } {
-  const t = norm(text)
+  const t = wordsToDigits(norm(text))
     .replace(/uve doble/g, "w")
     .replace(/i griega/g, "y")
     // "1234bcd" o "m1234ab" escrito todo junto: lo separamos
